@@ -1,7 +1,7 @@
 import React from 'react'
 import { Upload } from 'lucide-react'
-import { Tabs } from '../../constants/Tabs'
 import { FileTypes } from '../../constants/FileTypes'
+import { FILE_DROP_MESSAGES } from '../../constants/FileDropMessages'
 
 export default function FileUpload({ activeTab, setFileUploads }) {
     const onFileUpload = (event) => {
@@ -18,7 +18,7 @@ export default function FileUpload({ activeTab, setFileUploads }) {
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center w-full flex flex-col justify-center items-center flex-grow">
             <Upload className="h-12 w-12 text-gray-400" />
             <p className="mt-2 text-sm text-gray-600">
-                {activeTab === Tabs.THREED_DATA_VIEWER ? 'Drop .xyz or .pcd file here' : 'Drop GeoJSON file here'}
+                {FILE_DROP_MESSAGES[activeTab]}
             </p>
             <input
                 type="file"
