@@ -2,7 +2,11 @@ import React from 'react'
 import { Tabs } from '../../../constants/Tabs'
 import { Box, Map } from 'lucide-react'
 
-export default function CenterPanelIndex({ activeTab, handleTabClick }) {
+export default function CenterPanelIndex({ activeTab, setActiveTab }) {
+    const handleTabClick = (tab) => {
+        setActiveTab(tab);
+    }
+
     return (
         <div className="flex-1 flex flex-col h-full w-full">
             <div className="border-b-white bg-white px-4">

@@ -11,18 +11,14 @@ export default function LayoutIndex() {
         [Tabs.GIS_VIEWER]: null
     })
 
-    const handleTabClick = (tab) => {
-        setActiveTab(tab);
-    }
-
     return (
         <div className="flex flex-col h-screen w-screen p-4">
             <div className="flex flex-row h-4/5 gap-4">
                 <div className="w-1/4">
-                    <LeftPanelIndex fileUploads={fileUploads} activeTab={activeTab} />
+                    <LeftPanelIndex activeTab={activeTab} fileUploads={fileUploads} setFileUploads={setFileUploads} />
                 </div>
                 <div className="w-3/4">
-                    <CenterPanelIndex activeTab={activeTab} handleTabClick={handleTabClick} />
+                    <CenterPanelIndex activeTab={activeTab} setActiveTab={setActiveTab} />
                 </div>
             </div>
 
