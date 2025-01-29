@@ -2,9 +2,14 @@ import React from 'react';
 
 export default function ConfirmDialog({ message, onConfirm, onCancel }) {
     return (
+        // Overlay with blur effect
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
+            {/* Modal container */}
             <div className="bg-white rounded-md p-6 w-96 shadow-md">
+                {/* Dialog message */}
                 <p className="text-gray-800 mb-4">{message}</p>
+
+                {/* Action buttons */}
                 <div className="flex justify-end space-x-3">
                     <button
                         className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
