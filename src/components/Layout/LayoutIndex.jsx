@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import LeftPanelIndex from './LeftPanel/LeftPanelIndex'
 import CenterPanelIndex from './CenterPanel/CenterPanelIndex'
 import BottomPanelIndex from './BottomPanel/BottomPanelIndex'
-import { Tabs } from '../../constants/Tabs'
+import { TABS } from '../../constants/Tabs'
 
 export default function LayoutIndex() {
-    const [activeTab, setActiveTab] = useState(Tabs.THREED_DATA_VIEWER);
+    const [activeTab, setActiveTab] = useState(TABS.THREED_DATA_VIEWER);
     const [fileUploads, setFileUploads] = useState({
-        [Tabs.THREED_DATA_VIEWER]: null,
-        [Tabs.GIS_VIEWER]: null
-    })
+        [TABS.THREED_DATA_VIEWER]: null,
+        [TABS.GIS_VIEWER]: null
+    });
 
     return (
         <div className="flex flex-col h-screen w-screen p-4">

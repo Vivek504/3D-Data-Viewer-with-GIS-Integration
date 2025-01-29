@@ -1,18 +1,26 @@
 import React from 'react'
 import { Upload } from 'lucide-react'
-import { FileTypes } from '../../constants/FileTypes'
+import { FILE_TYPES, FILE_TYPES_BY_TAB } from '../../constants/FileTypes'
 import { FILE_DROP_MESSAGES } from '../../constants/FileDropMessages'
+import { parseXYZFile, parsePCDFile } from '../../utils/PointCloudParser'
 
-export default function FileUpload({ activeTab, setFileUploads }) {
-    const onFileUpload = (event) => {
+export default function FileUpload({ activeTab, setFileUploads, setFileDetails }) {
+    const onFileUpload = async (event) => {
         const file = event.target.files[0];
         if (file) {
             setFileUploads((prev) => ({
                 ...prev,
                 [activeTab]: file,
             }));
+            
+            if(file.name.endsWith(FILE_TYPES.XYZ)){
+                setFileDetails(await parseXYZFile(file));
+            }
+            else if(file.name.endsWith(FILE_TYPES.PCD)){
+                setFileDetails(await parsePCDFile(file));
+            }
         }
-    }
+    };
 
     return (
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center w-full flex flex-col justify-center items-center flex-grow">
@@ -22,7 +30,7 @@ export default function FileUpload({ activeTab, setFileUploads }) {
             </p>
             <input
                 type="file"
-                accept={FileTypes[activeTab]}
+                accept={FILE_TYPES_BY_TAB[activeTab]}
                 className="hidden"
                 id="file-upload"
                 onChange={onFileUpload}
