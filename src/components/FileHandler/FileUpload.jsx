@@ -38,7 +38,7 @@ export default function FileUpload({ setFileDetails }) {
                 id="file-upload"
                 onChange={onFileUpload}
             />
-            <label htmlFor="file-upload" className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 w-full max-w-xs cursor-pointer">
+            <label htmlFor="file-upload" className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 w-full max-w-xs cursor-pointer">
                 Select File
             </label>
         </div>

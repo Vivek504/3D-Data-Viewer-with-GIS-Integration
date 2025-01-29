@@ -4,13 +4,20 @@ import FileDetails from './FileDetails'
 import { useAppContext } from '../../contexts/AppContext';
 
 export default function FileHandlerIndex() {
-    const { activeTab, fileUploads } = useAppContext();
+    const { activeTab, fileUploads, setFileUploads } = useAppContext();
     const [fileDetails, setFileDetails] = useState(null);
+
+    const onRefresh = () => {
+        setFileUploads((prev) => ({
+            ...prev,
+            [activeTab]: null,
+        }));
+    }
 
     return (
         <div className="w-full">
             {fileUploads[activeTab] ?
-                <FileDetails fileDetails={fileDetails} />
+                <FileDetails fileDetails={fileDetails} onRefresh={onRefresh} />
                 :
                 <FileUpload setFileDetails={setFileDetails} />
             }
