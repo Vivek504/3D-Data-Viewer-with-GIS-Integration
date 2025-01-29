@@ -1,28 +1,42 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Upload } from 'lucide-react'
 import { FILE_TYPES, FILE_TYPES_BY_TAB } from '../../constants/FileTypes'
 import { FILE_DROP_MESSAGES } from '../../constants/FileDropMessages'
 import { parseXYZFile, parsePCDFile } from '../../utils/PointCloudParser'
 import { useAppContext } from '../../contexts/AppContext'
+import MessageDialog from './MessageDialog'
 
-export default function FileUpload({ setFileDetails }) {
-    const { activeTab, setFileUploads } = useAppContext();
+export default function FileUpload({ updateFileUploads, updateFileDetails }) {
+    const { activeTab } = useAppContext();
+    const [showMessageDialog, setShowMessageDialog] = useState(false);
 
     const onFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setFileUploads((prev) => ({
-                ...prev,
-                [activeTab]: file,
-            }));
-            
-            if(file.name.endsWith(FILE_TYPES.XYZ)){
-                setFileDetails(await parseXYZFile(file));
+        try {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.name.endsWith(FILE_TYPES.XYZ)) {
+                    updateFileDetails(await parseXYZFile(file));
+                    updateFileUploads(file);
+                }
+                else if (file.name.endsWith(FILE_TYPES.PCD)) {
+                    updateFileDetails(await parsePCDFile(file));
+                    updateFileUploads(file);
+                }
+                else {
+                    throw new Error("Invalid file");
+                }
             }
-            else if(file.name.endsWith(FILE_TYPES.PCD)){
-                setFileDetails(await parsePCDFile(file));
+            else {
+                throw new Error("Invalid file");
             }
         }
+        catch (error) {
+            setShowMessageDialog(true);
+        }
+    };
+
+    const handleCloseMessageDialog = () => {
+        setShowMessageDialog(false);
     };
 
     return (
@@ -41,6 +55,12 @@ export default function FileUpload({ setFileDetails }) {
             <label htmlFor="file-upload" className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 w-full max-w-xs cursor-pointer">
                 Select File
             </label>
+            {showMessageDialog && (
+                <MessageDialog
+                    message="Please upload a valid file."
+                    onClose={handleCloseMessageDialog}
+                />
+            )}
         </div>
     )
 }

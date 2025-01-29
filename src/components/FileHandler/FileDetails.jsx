@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { RefreshCcw } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog';
 
-export default function FileDetails({ fileDetails, onRefresh }) {
+export default function FileDetails({ fileDetailsData, onRefresh }) {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const handleRefreshClick = () => {
@@ -26,24 +26,24 @@ export default function FileDetails({ fileDetails, onRefresh }) {
                 </h3>
                 <RefreshCcw className="h-5 w-5 cursor-pointer text-blue-600 hover:text-blue-700" onClick={handleRefreshClick} />
             </div>
-            {fileDetails && (
+            {fileDetailsData && (
                 <div className="text-sm text-gray-700 space-y-2">
                     <div className="flex justify-between">
                         <span className="font-medium text-gray-500">Filename:</span>
-                        <span className="font-medium">{fileDetails.filename}</span>
+                        <span className="font-medium">{fileDetailsData.filename}</span>
                     </div>
                     <div className="flex justify-between">
                         <span className="font-medium text-gray-500">Size:</span>
-                        <span className="font-medium">{(fileDetails.fileSize / (1024)).toFixed(2)} KB</span>
+                        <span className="font-medium">{(fileDetailsData.fileSize / (1024)).toFixed(2)} KB</span>
                     </div>
                     <div className="flex justify-between">
                         <span className="font-medium text-gray-500">Points:</span>
-                        <span className="font-medium">{fileDetails.numPoints.toLocaleString()}</span>
+                        <span className="font-medium">{fileDetailsData.numPoints.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                         <span className="font-medium text-gray-500">Dimensions:</span>
                         <span className="font-medium">
-                            {fileDetails.boundingBox.width.toFixed(2)} x {fileDetails.boundingBox.height.toFixed(2)} x {fileDetails.boundingBox.depth.toFixed(2)} units
+                            {fileDetailsData.boundingBox.width.toFixed(2)} x {fileDetailsData.boundingBox.height.toFixed(2)} x {fileDetailsData.boundingBox.depth.toFixed(2)} units
                         </span>
                     </div>
                 </div>
