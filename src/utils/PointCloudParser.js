@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader'
 import { XYZLoader } from 'three/examples/jsm/loaders/XYZLoader'
 
+// Parses an .xyz file and extracts point cloud data
 export const parseXYZFile = async (file) => {
     const text = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -13,6 +14,7 @@ export const parseXYZFile = async (file) => {
     const xyzLoader = new XYZLoader();
     const geometry = xyzLoader.parse(text);
 
+    // Compute bounding box
     const bbox = new THREE.Box3().setFromBufferAttribute(geometry.attributes.position);
     const size = bbox.getSize(new THREE.Vector3());
 
@@ -30,6 +32,7 @@ export const parseXYZFile = async (file) => {
     };
 };
 
+// Parses a .pcd file and extracts point cloud data
 export const parsePCDFile = (file) => {
     return new Promise((resolve, reject) => {
         const loader = new PCDLoader();
@@ -39,6 +42,7 @@ export const parsePCDFile = (file) => {
             const content = event.target.result;
             const pointCloud = loader.parse(content);
 
+            // Compute bounding box
             const bbox = new THREE.Box3().setFromObject(pointCloud);
             const size = bbox.getSize(new THREE.Vector3());
 
