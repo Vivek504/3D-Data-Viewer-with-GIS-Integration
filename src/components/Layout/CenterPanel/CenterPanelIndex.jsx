@@ -1,8 +1,11 @@
 import React from 'react'
 import { TABS } from '../../../constants/Tabs'
 import { Box, Map } from 'lucide-react'
+import { useAppContext } from '../../../contexts/AppContext';
 
-export default function CenterPanelIndex({ activeTab, setActiveTab }) {
+export default function CenterPanelIndex() {
+    const { activeTab, setActiveTab } = useAppContext();
+
     const handleTabClick = (tab) => {
         setActiveTab(tab);
     };

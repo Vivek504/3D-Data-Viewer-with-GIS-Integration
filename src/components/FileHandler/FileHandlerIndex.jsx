@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import FileUpload from './FileUpload'
 import FileDetails from './FileDetails'
+import { useAppContext } from '../../contexts/AppContext';
 
-export default function FileHandlerIndex({ activeTab, fileUploads, setFileUploads }) {
+export default function FileHandlerIndex() {
+    const { activeTab, fileUploads } = useAppContext();
     const [fileDetails, setFileDetails] = useState(null);
 
     return (
@@ -10,7 +12,7 @@ export default function FileHandlerIndex({ activeTab, fileUploads, setFileUpload
             {fileUploads[activeTab] ?
                 <FileDetails fileDetails={fileDetails} />
                 :
-                <FileUpload activeTab={activeTab} setFileUploads={setFileUploads} setFileDetails={setFileDetails} />
+                <FileUpload setFileDetails={setFileDetails} />
             }
         </div>
     )

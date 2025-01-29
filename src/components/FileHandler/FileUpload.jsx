@@ -3,8 +3,11 @@ import { Upload } from 'lucide-react'
 import { FILE_TYPES, FILE_TYPES_BY_TAB } from '../../constants/FileTypes'
 import { FILE_DROP_MESSAGES } from '../../constants/FileDropMessages'
 import { parseXYZFile, parsePCDFile } from '../../utils/PointCloudParser'
+import { useAppContext } from '../../contexts/AppContext'
 
-export default function FileUpload({ activeTab, setFileUploads, setFileDetails }) {
+export default function FileUpload({ setFileDetails }) {
+    const { activeTab, setFileUploads } = useAppContext();
+
     const onFileUpload = async (event) => {
         const file = event.target.files[0];
         if (file) {
