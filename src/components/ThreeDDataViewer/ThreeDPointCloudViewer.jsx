@@ -6,10 +6,17 @@ import { XYZLoader } from 'three/examples/jsm/loaders/XYZLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { TABS } from '../../constants/Tabs';
 import { FILE_TYPES } from '../../constants/FileTypes';
+import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
 
 export default function ThreeDPointCloudViewer() {
     const { fileUploads } = useAppContext();
     const containerRef = useRef(null);
+    const { pointSize, setPointSize } = useThreeDDataViewerContext();
+
+    const loadedObjectRef = useRef(null);
+    const rendererRef = useRef(null);
+    const sceneRef = useRef(null);
+    const cameraRef = useRef(null);
 
     useEffect(() => {
         const file = fileUploads[TABS.THREED_DATA_VIEWER];
@@ -17,13 +24,21 @@ export default function ThreeDPointCloudViewer() {
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x111827);
+        sceneRef.current = scene;
 
-        const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            containerRef.current.clientWidth / containerRef.current.clientHeight,
+            0.1,
+            1000
+        );
+        cameraRef.current = camera;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         containerRef.current.appendChild(renderer.domElement);
+        rendererRef.current = renderer;
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -40,13 +55,17 @@ export default function ThreeDPointCloudViewer() {
             else if (file.name.endsWith(FILE_TYPES.XYZ)) {
                 const loader = new XYZLoader();
                 const geometry = loader.parse(event.target.result);
-                const material = new THREE.PointsMaterial({ size: 0.05, color: 0xffffff });
+                const material = new THREE.PointsMaterial({ size: 0.005, color: 0xffffff });
                 loadedObject = new THREE.Points(geometry, material);
             }
 
             if (loadedObject) {
+                if (loadedObject.material && loadedObject.material.size) {
+                    setPointSize(loadedObject.material.size)
+                }
                 loadedObject.frustumCulled = false;
                 scene.add(loadedObject);
+                loadedObjectRef.current = loadedObject;
                 fitCameraToObject(camera, controls, loadedObject, renderer);
             }
         };
@@ -124,6 +143,18 @@ export default function ThreeDPointCloudViewer() {
             }
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
+
+    useEffect(() => {
+        if (loadedObjectRef.current) {
+            if (loadedObjectRef.current.material) {
+                loadedObjectRef.current.material.size = pointSize;
+                loadedObjectRef.current.material.needsUpdate = true;
+            }
+            if (rendererRef.current && sceneRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+        }
+    }, [pointSize]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
