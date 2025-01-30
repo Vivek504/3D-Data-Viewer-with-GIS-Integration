@@ -2,6 +2,7 @@ import React from 'react'
 import { TABS } from '../../../constants/Tabs'
 import { Box, Map } from 'lucide-react'
 import { useAppContext } from '../../../contexts/AppContext';
+import ThreeDDataViewerIndex from '../../ThreeDDataViewer/ThreeDDataViewerIndex';
 
 export default function CenterPanelIndex() {
     const { activeTab, setActiveTab } = useAppContext();
@@ -42,9 +43,7 @@ export default function CenterPanelIndex() {
             <div className="flex-1 bg-gray-50 p-4">
                 <div className="h-full text-gray-400 bg-white rounded-lg shadow-sm border-gray flex items-center justify-center">
                     {activeTab === TABS.THREED_DATA_VIEWER ? (
-                        <div className="text-gray-600">
-                            [3D Point Cloud Visualization]
-                        </div>
+                        <ThreeDDataViewerIndex />
                     ) : (
                         <div className="text-gray-600">
                             [Interactive GIS Map View]
