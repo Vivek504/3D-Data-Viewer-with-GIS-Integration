@@ -2,8 +2,8 @@ import React from 'react'
 import FileHandlerIndex from '../../FileHandler/FileHandlerIndex'
 import { useAppContext } from '../../../contexts/AppContext'
 import { TABS } from '../../../constants/Tabs';
-import PointSizeAdjustment from '../../ThreeDDataViewer/PointSizeAdjustment';
 import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
+import ThreeDFilters from './ThreeDFilters';
 
 export default function LeftPanelIndex() {
     const { activeTab, fileUploads } = useAppContext();
@@ -14,7 +14,7 @@ export default function LeftPanelIndex() {
             {/* File handler section */}
             <FileHandlerIndex />
 
-            {activeTab === TABS.THREED_DATA_VIEWER && fileUploads[activeTab] && pointSize && <PointSizeAdjustment />}
+            {activeTab === TABS.THREED_DATA_VIEWER && fileUploads[activeTab] && pointSize && <ThreeDFilters />}
         </div>
     )
 }

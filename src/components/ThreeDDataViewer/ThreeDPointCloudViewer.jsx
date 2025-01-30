@@ -7,11 +7,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { TABS } from '../../constants/Tabs';
 import { FILE_TYPES } from '../../constants/FileTypes';
 import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
+import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
 
 export default function ThreeDPointCloudViewer() {
     const { fileUploads } = useAppContext();
     const containerRef = useRef(null);
-    const { pointSize, setPointSize } = useThreeDDataViewerContext();
+    const { pointSize, setPointSize, colorRanges, appliedColorMapping } = useThreeDDataViewerContext();
 
     const loadedObjectRef = useRef(null);
     const rendererRef = useRef(null);
@@ -55,7 +56,8 @@ export default function ThreeDPointCloudViewer() {
             else if (file.name.endsWith(FILE_TYPES.XYZ)) {
                 const loader = new XYZLoader();
                 const geometry = loader.parse(event.target.result);
-                const material = new THREE.PointsMaterial({ size: 0.005, color: 0xffffff });
+                // const material = new THREE.PointsMaterial({ size: 0.005, color: 0xffffff });
+                const material = new THREE.PointsMaterial({ size: 0.005, vertexColors: true });
                 loadedObject = new THREE.Points(geometry, material);
             }
 
@@ -64,6 +66,11 @@ export default function ThreeDPointCloudViewer() {
                     setPointSize(loadedObject.material.size)
                 }
                 loadedObject.frustumCulled = false;
+
+                if (appliedColorMapping) {
+                    applyColorMapping(loadedObject);
+                }
+
                 scene.add(loadedObject);
                 loadedObjectRef.current = loadedObject;
                 fitCameraToObject(camera, controls, loadedObject, renderer);
@@ -144,6 +151,40 @@ export default function ThreeDPointCloudViewer() {
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
 
+    const applyColorMapping = (object) => {
+        if (!object.geometry || !object.geometry.attributes.position) return;
+
+        const positions = object.geometry.attributes.position.array;
+        const colors = new Float32Array(positions.length);
+        const color = new THREE.Color();
+
+        for (let i = 0; i < positions.length; i += 3) {
+            const altitude = positions[i + 1];
+            let assignedColor = POINT_CLOUD_COLORS.DEFAULT;
+
+            for (const range of colorRanges) {
+                if (altitude >= range.from && altitude <= range.to) {
+                    assignedColor = range.color;
+                    break;
+                }
+            }
+
+            color.set(assignedColor);
+
+            colors[i] = color.r;
+            colors[i + 1] = color.g;
+            colors[i + 2] = color.b;
+        }
+
+        object.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        object.material.vertexColors = true;
+        object.material.needsUpdate = true;
+
+        if (rendererRef.current && sceneRef.current && cameraRef.current) {
+            rendererRef.current.render(sceneRef.current, cameraRef.current);
+        }
+    };
+
     useEffect(() => {
         if (loadedObjectRef.current) {
             if (loadedObjectRef.current.material) {
@@ -155,6 +196,22 @@ export default function ThreeDPointCloudViewer() {
             }
         }
     }, [pointSize]);
+
+    useEffect(() => {
+        if (loadedObjectRef.current) {
+            if (appliedColorMapping) {
+                applyColorMapping(loadedObjectRef.current);
+            } else {
+                loadedObjectRef.current.material.vertexColors = false;
+                loadedObjectRef.current.material.color.set(POINT_CLOUD_COLORS.DEFAULT);
+                loadedObjectRef.current.material.needsUpdate = true;
+            }
+
+            if (rendererRef.current && sceneRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+        }
+    }, [appliedColorMapping, colorRanges]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
