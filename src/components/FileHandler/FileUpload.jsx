@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react'
 import { FILE_TYPES, FILE_TYPES_BY_TAB } from '../../constants/FileTypes'
 import { FILE_DROP_MESSAGES } from '../../constants/FileDropMessages'
 import { parseXYZFile, parsePCDFile } from '../../utils/PointCloudParser'
+import { parseGeoJSONFile } from '../../utils/GISParser'
 import { useAppContext } from '../../contexts/AppContext'
 import MessageDialog from './MessageDialog'
 
@@ -21,6 +22,10 @@ export default function FileUpload({ updateFileUploads, updateFileDetails }) {
                 }
                 else if (file.name.endsWith(FILE_TYPES.PCD)) {
                     updateFileDetails(await parsePCDFile(file));
+                    updateFileUploads(file);
+                }
+                else if (file.name.endsWith(FILE_TYPES.GEOJSON) || file.name.endsWith(FILE_TYPES.JSON)) {
+                    updateFileDetails(await parseGeoJSONFile(file));
                     updateFileUploads(file);
                 }
                 else {
