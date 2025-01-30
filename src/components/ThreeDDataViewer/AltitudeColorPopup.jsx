@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Plus, X, Trash2 } from "lucide-react"
 import { POINT_CLOUD_COLORS } from "../../constants/ThreeDViewerColors"
 
@@ -9,6 +9,50 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
     };
 
     const stepSize = Math.min(getDecimalScale(min), getDecimalScale(max));
+
+    const [segments, setSegments] = useState([]);
+
+    useEffect(() => {
+        if (!colorRanges.length) return;
+
+        const sortedColorRanges = [...colorRanges].sort((a, b) => a.from - b.from);
+
+        let newSegments = [];
+        let currentPos = min;
+
+        for (let i = 0; i < sortedColorRanges.length; i++) {
+            const range = sortedColorRanges[i];
+
+            if (currentPos < range.from) {
+                newSegments.push({
+                    id: `gap-${currentPos}-${range.from}`,
+                    from: currentPos,
+                    to: range.from,
+                    color: POINT_CLOUD_COLORS.DEFAULT,
+                });
+            }
+
+            newSegments.push({
+                id: range.id,
+                from: range.from,
+                to: range.to,
+                color: range.color,
+            });
+
+            currentPos = range.to;
+        }
+
+        if (currentPos < max) {
+            newSegments.push({
+                id: `gap-${currentPos}-${max}`,
+                from: currentPos,
+                to: max,
+                color: POINT_CLOUD_COLORS.DEFAULT,
+            });
+        }
+
+        setSegments(newSegments);
+    }, [min, max, colorRanges]);
 
     const addColorRange = () => {
         const lastColorRange = colorRanges[colorRanges.length - 1];
@@ -100,7 +144,6 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                                         />
                                     </div>
                                 </div>
-
                                 <button
                                     onClick={() => removeColorRange(index)}
                                     className="text-red-500 hover:text-red-600 transition-colors"
@@ -127,25 +170,22 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                     <div className="mt-6 space-y-2">
                         <label className="block text-sm font-medium">Color Range Preview</label>
                         <div className="h-6 rounded-md overflow-hidden flex border border-gray-300">
-                            {colorRanges.map((colorRange) => {
+                            {segments.map((segment) => {
                                 const width =
-                                    ((colorRange.to - colorRange.from) /
-                                        (colorRanges[colorRanges.length - 1].to - colorRanges[0].from)) *
-                                    100;
+                                    ((segment.to - segment.from) / (max - min)) * 100;
                                 return (
                                     <div
-                                        key={colorRange.id}
+                                        key={segment.id}
                                         style={{
                                             width: `${width}%`,
-                                            backgroundColor: colorRange.color,
+                                            backgroundColor: segment.color,
                                             position: "relative",
                                         }}
-                                        className={`h-full border ${colorRange.color === POINT_CLOUD_COLORS.WHITE
-                                            ? "border-gray-300"
-                                            : "border-transparent"
+                                        className={`h-full border ${segment.color === POINT_CLOUD_COLORS.DEFAULT
+                                                ? "border-gray-300"
+                                                : "border-transparent"
                                             }`}
-                                    >
-                                    </div>
+                                    ></div>
                                 );
                             })}
                         </div>
