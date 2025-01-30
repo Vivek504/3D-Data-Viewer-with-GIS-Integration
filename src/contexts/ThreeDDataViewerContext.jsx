@@ -7,15 +7,12 @@ export const useThreeDDataViewerContext = () => useContext(ThreeDDataViewerConte
 
 export const ThreeDDataViewerContextProvider = ({ children }) => {
     const [pointSize, setPointSize] = useState();
-    const [fileDetails, setFileDetails] = useState({
-        [TABS.THREED_DATA_VIEWER]: null,
-        [TABS.GIS_VIEWER]: null,
-    });
+    
     const [colorRanges, setColorRanges] = useState([]);
     const [appliedColorMapping, setAppliedColorMapping] = useState(false);
 
     return (
-        <ThreeDDataViewerContext.Provider value={{ pointSize, setPointSize, fileDetails, setFileDetails, colorRanges, setColorRanges, appliedColorMapping, setAppliedColorMapping }}>
+        <ThreeDDataViewerContext.Provider value={{ pointSize, setPointSize, colorRanges, setColorRanges, appliedColorMapping, setAppliedColorMapping }}>
             {children}
         </ThreeDDataViewerContext.Provider>
     )

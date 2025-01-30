@@ -17,9 +17,15 @@ export const AppContextProvider = ({ children }) => {
         [TABS.GIS_VIEWER]: null // Stores uploaded file for GIS Viewer tab
     });
 
+    // State to manage the file details for different tabs
+    const [fileDetails, setFileDetails] = useState({
+        [TABS.THREED_DATA_VIEWER]: null,
+        [TABS.GIS_VIEWER]: null,
+    });
+
     return (
         // Providing state and state-modifying functions to child components
-        <AppContext.Provider value={{ activeTab, setActiveTab, fileUploads, setFileUploads }}>
+        <AppContext.Provider value={{ activeTab, setActiveTab, fileUploads, setFileUploads, fileDetails, setFileDetails }}>
             {children}
         </AppContext.Provider>
     );

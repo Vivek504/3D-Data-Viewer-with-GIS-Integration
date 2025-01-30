@@ -4,11 +4,12 @@ import AltitudeColorPopup from '../ThreeDDataViewer/AltitudeColorPopup';
 import { Palette } from 'lucide-react';
 import { TABS } from '../../constants/Tabs';
 import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
+import { useAppContext } from '../../contexts/AppContext';
 
 export default function AltitudeColorPopupIndex() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
-
-    const { fileDetails, colorRanges, setColorRanges, setAppliedColorMapping } = useThreeDDataViewerContext();
+    const { fileDetails } = useAppContext();
+    const { colorRanges, setColorRanges, setAppliedColorMapping } = useThreeDDataViewerContext();
 
     useEffect(() => {
         if (colorRanges.length === 0) {
