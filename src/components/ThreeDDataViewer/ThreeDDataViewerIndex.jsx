@@ -1,6 +1,8 @@
 import React from 'react'
 import { useAppContext } from '../../contexts/AppContext'
 import { Maximize2 } from 'lucide-react';
+import ThreeDPointCloudViewer from './ThreeDPointCloudViewer';
+import { TABS } from '../../constants/Tabs';
 
 export default function ThreeDDataViewerIndex() {
     const { activeTab, fileUploads } = useAppContext();
@@ -13,9 +15,7 @@ export default function ThreeDDataViewerIndex() {
                     <p>Upload a file to begin visualization</p>
                 </div>
             ) : (
-                <div className="text-gray-600">
-                    [3D Point Cloud Viewer]
-                </div>
+                activeTab === TABS.THREED_DATA_VIEWER && <ThreeDPointCloudViewer />
             )}
         </div>
     )
