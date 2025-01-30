@@ -1,11 +1,12 @@
 import React from 'react'
 import { TABS } from '../../../constants/Tabs'
-import { Box, Map } from 'lucide-react'
+import { Box, Map, Maximize2 } from 'lucide-react'
 import { useAppContext } from '../../../contexts/AppContext';
 import ThreeDDataViewerIndex from '../../ThreeDDataViewer/ThreeDDataViewerIndex';
+import GISViewerIndex from '../../GISViewer/GISViewerIndex';
 
 export default function CenterPanelIndex() {
-    const { activeTab, setActiveTab } = useAppContext();
+    const { activeTab, setActiveTab, fileUploads } = useAppContext();
 
     const handleTabClick = (tab) => {
         setActiveTab(tab);
@@ -42,12 +43,13 @@ export default function CenterPanelIndex() {
 
             <div className="flex-1 bg-gray-50 p-4">
                 <div className="h-full text-gray-400 bg-white rounded-lg shadow-sm border-gray flex items-center justify-center">
-                    {activeTab === TABS.THREED_DATA_VIEWER ? (
-                        <ThreeDDataViewerIndex />
-                    ) : (
-                        <div className="text-gray-600">
-                            [Interactive GIS Map View]
+                    {!fileUploads[activeTab] ? (
+                        <div className="text-gray-400">
+                            <Maximize2 className="h-16 w-16 mx-auto mb-4" />
+                            <p>Upload a file to begin visualization</p>
                         </div>
+                    ) : (
+                        activeTab === TABS.THREED_DATA_VIEWER ? <ThreeDDataViewerIndex /> : <GISViewerIndex />
                     )}
                 </div>
             </div>
