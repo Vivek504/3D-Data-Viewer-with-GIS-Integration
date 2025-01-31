@@ -9,18 +9,27 @@ import { useAppContext } from '../../contexts/AppContext';
 export default function AltitudeColorPopupIndex() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const { fileDetails } = useAppContext();
-    const { colorRanges, setColorRanges, setAppliedColorMapping } = useThreeDDataViewerContext();
+    const { colorRanges, setColorRanges, setApplyColorMapping, setResetColorMapping } = useThreeDDataViewerContext();
+
+    const resetColorRanges = () => {
+        setColorRanges([{
+            id: 1,
+            from: fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.min.y.toFixed(3),
+            to: fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y.toFixed(3),
+            color: POINT_CLOUD_COLORS.DEFAULT
+        }]);
+    }
+
+    const onResetColorMapping = () => {
+        setResetColorMapping(true);
+        resetColorRanges();
+    }
 
     useEffect(() => {
         if (colorRanges.length === 0) {
-            setColorRanges([{
-                id: 1,
-                from: fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.min.y.toFixed(3),
-                to: fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y.toFixed(3),
-                color: POINT_CLOUD_COLORS.DEFAULT
-            }]);
+            resetColorRanges();
         }
-    }, [])
+    }, []);
 
     return (
         <div className="w-full">
@@ -37,8 +46,9 @@ export default function AltitudeColorPopupIndex() {
                     max={fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y.toFixed(3)}
                     colorRanges={colorRanges}
                     setColorRanges={setColorRanges}
-                    setAppliedColorMapping={setAppliedColorMapping}
+                    setApplyColorMapping={setApplyColorMapping}
                     onClose={() => setIsPopupOpen(false)}
+                    onResetColorMapping={onResetColorMapping}
                 />
             )}
         </div>

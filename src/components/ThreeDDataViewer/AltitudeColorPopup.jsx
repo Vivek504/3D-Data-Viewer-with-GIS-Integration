@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Plus, X, Trash2 } from "lucide-react"
 import { POINT_CLOUD_COLORS } from "../../constants/ThreeDViewerColors"
 
-export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, setAppliedColorMapping }) {
+export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, setApplyColorMapping, onResetColorMapping }) {
     const getDecimalScale = (num) => {
         const decimalPart = num.toString().split(".")[1];
         return decimalPart ? Math.pow(10, -decimalPart.length) : 1;
@@ -65,6 +65,7 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                 color: POINT_CLOUD_COLORS.DEFAULT,
             },
         ]);
+        setApplyColorMapping(true);
     };
 
     const updateColorRange = (index, key, value) => {
@@ -72,17 +73,13 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
             i === index ? { ...colorRange, [key]: value } : colorRange
         );
         setColorRanges(updatedColorRanges);
+        setApplyColorMapping(true);
     };
 
     const removeColorRange = (index) => {
         const updatedColorRanges = colorRanges.filter((_, i) => i !== index);
         setColorRanges(updatedColorRanges);
-    };
-
-    const handleApply = () => {
-        setColorRanges(colorRanges);
-        setAppliedColorMapping(true);
-        onClose();
+        setApplyColorMapping(true);
     };
 
     return (
@@ -203,13 +200,13 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                         onClick={onClose}
                         className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
                     >
-                        Cancel
+                        Close
                     </button>
                     <button
-                        onClick={handleApply}
-                        className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                        onClick={onResetColorMapping}
+                        className="px-4 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                     >
-                        Apply Changes
+                        Reset Changes
                     </button>
                 </div>
             </div>
