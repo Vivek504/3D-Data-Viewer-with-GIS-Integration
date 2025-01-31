@@ -1,11 +1,11 @@
 import React from 'react'
-import PointSizeAdjustment from '../../ThreeDDataViewer/PointSizeAdjustment';
-import AltitudeColorPopupIndex from '../../ThreeDDataViewer/AltitudeColorPopupIndex';
+import PointSizeAdjustmentIndex from '../../ThreeDDataViewer/PointSizeAdjustment/PointSizeAdjustmentIndex';
+import AltitudeColorPopupIndex from '../../ThreeDDataViewer/AltitudeColorFilter/AltitudeColorPopupIndex';
 
 export default function ThreeDFilters() {
     return (
         <div className="space-y-4">
-            <PointSizeAdjustment />
+            <PointSizeAdjustmentIndex />
             <AltitudeColorPopupIndex />
         </div>
     )

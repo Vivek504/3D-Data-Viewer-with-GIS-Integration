@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
-import AltitudeColorPopup from '../ThreeDDataViewer/AltitudeColorPopup';
+import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
+import AltitudeColorPopup from './AltitudeColorPopup';
 import { Palette } from 'lucide-react';
-import { TABS } from '../../constants/Tabs';
-import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
-import { useAppContext } from '../../contexts/AppContext';
+import { TABS } from '../../../constants/Tabs';
+import { POINT_CLOUD_COLORS } from '../../../constants/ThreeDViewerColors';
+import { useAppContext } from '../../../contexts/AppContext';
 
 export default function AltitudeColorPopupIndex() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);

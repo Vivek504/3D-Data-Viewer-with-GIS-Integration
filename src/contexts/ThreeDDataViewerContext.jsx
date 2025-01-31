@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState } from 'react'
-import { TABS } from '../constants/Tabs';
 
 const ThreeDDataViewerContext = createContext();
 
@@ -12,12 +11,17 @@ export const ThreeDDataViewerContextProvider = ({ children }) => {
     const [applyColorMapping, setApplyColorMapping] = useState(false);
     const [resetColorMapping, setResetColorMapping] = useState(false);
 
+    const [altitudeRanges, setAltitudeRanges] = useState([]);
+    const [resetAltitudeRanges, setResetAltitudeRanges] = useState(false);
+
     return (
         <ThreeDDataViewerContext.Provider value={{
             pointSize, setPointSize,
             colorRanges, setColorRanges,
             applyColorMapping, setApplyColorMapping,
-            resetColorMapping, setResetColorMapping
+            resetColorMapping, setResetColorMapping,
+            altitudeRanges, setAltitudeRanges,
+            resetAltitudeRanges, setResetAltitudeRanges
         }}>
             {children}
         </ThreeDDataViewerContext.Provider>
