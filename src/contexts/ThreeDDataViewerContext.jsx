@@ -12,7 +12,7 @@ export const ThreeDDataViewerContextProvider = ({ children }) => {
     const [resetColorMapping, setResetColorMapping] = useState(false);
 
     const [altitudeRanges, setAltitudeRanges] = useState([]);
-    const [resetAltitudeRanges, setResetAltitudeRanges] = useState(false);
+    const [resetAltitudeRangesFilter, setResetAltitudeRangesFilter] = useState(false);
 
     return (
         <ThreeDDataViewerContext.Provider value={{
@@ -21,7 +21,7 @@ export const ThreeDDataViewerContextProvider = ({ children }) => {
             applyColorMapping, setApplyColorMapping,
             resetColorMapping, setResetColorMapping,
             altitudeRanges, setAltitudeRanges,
-            resetAltitudeRanges, setResetAltitudeRanges
+            resetAltitudeRangesFilter, setResetAltitudeRangesFilter
         }}>
             {children}
         </ThreeDDataViewerContext.Provider>

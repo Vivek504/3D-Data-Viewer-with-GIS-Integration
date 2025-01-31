@@ -18,7 +18,10 @@ export default function ThreeDPointCloudViewer() {
         colorRanges,
         applyColorMapping,
         resetColorMapping,
-        setResetColorMapping
+        setResetColorMapping,
+        altitudeRanges,
+        resetAltitudeRangesFilter,
+        setResetAltitudeRangesFilter
     } = useThreeDDataViewerContext();
 
     const loadedObjectRef = useRef(null);
