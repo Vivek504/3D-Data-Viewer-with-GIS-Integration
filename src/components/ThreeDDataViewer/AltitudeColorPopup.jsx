@@ -60,7 +60,7 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
             ...colorRanges,
             {
                 id: colorRanges.length + 1,
-                from: lastColorRange.to + stepSize,
+                from: lastColorRange.to + stepSize >= max ? max : lastColorRange.to + stepSize,
                 to: max,
                 color: POINT_CLOUD_COLORS.DEFAULT,
             },
@@ -77,6 +77,10 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
     };
 
     const removeColorRange = (index) => {
+        if (colorRanges.length === 1) {
+            return;
+        }
+
         const updatedColorRanges = colorRanges.filter((_, i) => i !== index);
         setColorRanges(updatedColorRanges);
         setApplyColorMapping(true);
@@ -143,22 +147,21 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                                 </div>
                                 <button
                                     onClick={() => removeColorRange(index)}
-                                    className="text-red-500 hover:text-red-600 transition-colors"
+                                    disabled={colorRanges.length === 1}
+                                    className={`transition-colors ${colorRanges.length === 1
+                                        ? "text-gray-400 cursor-not-allowed"
+                                        : "text-red-500 hover:text-red-600"}`}
                                 >
                                     <Trash2 className="h-5 w-5" />
                                 </button>
+
                             </div>
                         ))}
                     </div>
 
                     <button
                         onClick={addColorRange}
-                        disabled={colorRanges[colorRanges.length - 1].to === max}
-                        className={`mt-4 w-full flex items-center justify-center space-x-2 rounded-md py-2 px-4 transition 
-                            ${colorRanges[colorRanges.length - 1].to >= max
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-600 text-white"
-                            }`}
+                        className="mt-4 w-full flex items-center justify-center space-x-2 rounded-md py-2 px-4 transition bg-blue-500 hover:bg-blue-600 text-white"
                     >
                         <Plus className="h-4 w-4" />
                         <span>Add Range</span>
@@ -179,8 +182,8 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                                             position: "relative",
                                         }}
                                         className={`h-full border ${segment.color === POINT_CLOUD_COLORS.DEFAULT
-                                                ? "border-gray-300"
-                                                : "border-transparent"
+                                            ? "border-gray-300"
+                                            : "border-transparent"
                                             }`}
                                     ></div>
                                 );
