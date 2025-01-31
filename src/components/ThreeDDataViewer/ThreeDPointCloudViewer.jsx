@@ -19,9 +19,7 @@ export default function ThreeDPointCloudViewer() {
         applyColorMapping,
         resetColorMapping,
         setResetColorMapping,
-        altitudeRanges,
-        resetAltitudeRangesFilter,
-        setResetAltitudeRangesFilter
+        altitudeRanges
     } = useThreeDDataViewerContext();
 
     const loadedObjectRef = useRef(null);
@@ -29,6 +27,7 @@ export default function ThreeDPointCloudViewer() {
     const sceneRef = useRef(null);
     const cameraRef = useRef(null);
     const originalColorsRef = useRef(null);
+    const originalGeometryRef = useRef(null);
 
     useEffect(() => {
         const file = fileUploads[TABS.THREED_DATA_VIEWER];
@@ -83,6 +82,7 @@ export default function ThreeDPointCloudViewer() {
                     setPointSize(loadedObject.material.size);
                 }
                 loadedObject.frustumCulled = false;
+                originalGeometryRef.current = loadedObject.geometry.clone();
 
                 if (applyColorMapping) {
                     applyColorMappingOnObject(loadedObject);
@@ -121,7 +121,6 @@ export default function ThreeDPointCloudViewer() {
 
         const fitCameraToObject = (camera, controls, object, renderer, offset = 1.25) => {
             const boundingBox = new THREE.Box3().setFromObject(object);
-
             const center = boundingBox.getCenter(new THREE.Vector3());
             const size = boundingBox.getSize(new THREE.Vector3());
 
@@ -167,6 +166,7 @@ export default function ThreeDPointCloudViewer() {
             }
 
             originalColorsRef.current = null;
+            originalGeometryRef.current = null;
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
 
@@ -174,7 +174,7 @@ export default function ThreeDPointCloudViewer() {
         if (!object.geometry || !object.geometry.attributes.position) return;
 
         const positions = object.geometry.attributes.position.array;
-        const colors = new Float32Array(positions.length);
+        const colors = new Float32Array((positions.length / 3) * 3);
         const color = new THREE.Color();
 
         for (let i = 0; i < positions.length; i += 3) {
@@ -198,6 +198,77 @@ export default function ThreeDPointCloudViewer() {
         object.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         object.material.vertexColors = true;
         object.material.needsUpdate = true;
+
+        if (rendererRef.current && sceneRef.current && cameraRef.current) {
+            rendererRef.current.render(sceneRef.current, cameraRef.current);
+        }
+    };
+
+    const applyAltitudeFilter = () => {
+        if (!loadedObjectRef.current || !originalGeometryRef.current) return;
+
+        const filteredGeometry = originalGeometryRef.current.clone();
+        const positions = filteredGeometry.attributes.position.array;
+        const totalPoints = positions.length / 3;
+
+        const indices = [];
+
+        for (let i = 0; i < totalPoints; i++) {
+            const y = positions[i * 3 + 1];
+            for (const range of altitudeRanges) {
+                if (y >= range.from && y <= range.to) {
+                    indices.push(i);
+                    break;
+                }
+            }
+        }
+
+        if (indices.length === 0) {
+            return;
+        }
+
+        const filteredPositions = new Float32Array(indices.length * 3);
+        let filteredColors = null;
+
+        if (originalColorsRef.current) {
+            filteredColors = new Float32Array(indices.length * 3);
+        }
+
+        for (let i = 0; i < indices.length; i++) {
+            const index = indices[i];
+            filteredPositions.set(
+                [
+                    positions[index * 3],
+                    positions[index * 3 + 1],
+                    positions[index * 3 + 2]
+                ],
+                i * 3
+            );
+
+            if (originalColorsRef.current) {
+                filteredColors.set(
+                    [
+                        originalColorsRef.current[index * 3],
+                        originalColorsRef.current[index * 3 + 1],
+                        originalColorsRef.current[index * 3 + 2]
+                    ],
+                    i * 3
+                );
+            }
+        }
+
+        filteredGeometry.setAttribute('position', new THREE.BufferAttribute(filteredPositions, 3));
+
+        if (filteredColors) {
+            filteredGeometry.setAttribute('color', new THREE.BufferAttribute(filteredColors, 3));
+        }
+
+        loadedObjectRef.current.geometry.dispose();
+        loadedObjectRef.current.geometry = filteredGeometry;
+
+        if (applyColorMapping) {
+            applyColorMappingOnObject(loadedObjectRef.current);
+        }
 
         if (rendererRef.current && sceneRef.current && cameraRef.current) {
             rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -272,6 +343,10 @@ export default function ThreeDPointCloudViewer() {
             }
         }
     }, [resetColorMapping, setResetColorMapping]);
+
+    useEffect(() => {
+        applyAltitudeFilter();
+    }, [altitudeRanges]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }

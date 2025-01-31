@@ -8,7 +8,7 @@ import AltitudeRangeFilterPopup from './AltitudeRangeFilterPopup';
 export default function AltitudeRangeFilter() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const { fileDetails } = useAppContext();
-    const { altitudeRanges, setAltitudeRanges, setResetAltitudeRangesFilter } = useThreeDDataViewerContext();
+    const { altitudeRanges, setAltitudeRanges } = useThreeDDataViewerContext();
 
     const resetAltitudeRanges = () => {
         setAltitudeRanges([{
@@ -20,7 +20,6 @@ export default function AltitudeRangeFilter() {
 
     const onResetAltitudeRanges = () => {
         resetAltitudeRanges();
-        setResetAltitudeRangesFilter(true);
     }
 
     useEffect(() => {
