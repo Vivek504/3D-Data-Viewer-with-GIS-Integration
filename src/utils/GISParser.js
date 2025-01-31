@@ -5,11 +5,12 @@ export const parseGeoJSONFile = async (file) => {
 
         reader.onload = () => {
             try {
-                JSON.parse(reader.result); // Parse the JSON content
+                const jsonData = JSON.parse(reader.result); // Parse the JSON content
 
                 resolve({
                     filename: file.name,
-                    fileSize: file.size // Size in bytes
+                    fileSize: file.size, // Size in bytes
+                    fileContent: jsonData
                 });
             } catch (error) {
                 reject(new Error("Invalid GeoJSON/JSON file format."));
