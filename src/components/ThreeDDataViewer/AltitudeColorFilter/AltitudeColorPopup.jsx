@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from "react"
 import { Plus, X, Trash2 } from "lucide-react"
-import { POINT_CLOUD_COLORS } from "../../constants/ThreeDViewerColors"
+import { POINT_CLOUD_COLORS } from "../../../constants/ThreeDViewerColors"
+import { getStepSize } from "../../../utils/MathUtils";
 
-export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, setAppliedColorMapping }) {
-    const getDecimalScale = (num) => {
-        const decimalPart = num.toString().split(".")[1];
-        return decimalPart ? Math.pow(10, -decimalPart.length) : 1;
-    };
-
-    const stepSize = Math.min(getDecimalScale(min), getDecimalScale(max));
+export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, setApplyColorMapping, onResetColorMapping }) {
+    const stepSize = getStepSize(min, max);
 
     const [segments, setSegments] = useState([]);
 
@@ -60,11 +56,12 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
             ...colorRanges,
             {
                 id: colorRanges.length + 1,
-                from: lastColorRange.to + stepSize,
+                from: lastColorRange.to + stepSize >= max ? max : lastColorRange.to + stepSize,
                 to: max,
                 color: POINT_CLOUD_COLORS.DEFAULT,
             },
         ]);
+        setApplyColorMapping(true);
     };
 
     const updateColorRange = (index, key, value) => {
@@ -72,17 +69,17 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
             i === index ? { ...colorRange, [key]: value } : colorRange
         );
         setColorRanges(updatedColorRanges);
+        setApplyColorMapping(true);
     };
 
     const removeColorRange = (index) => {
+        if (colorRanges.length === 1) {
+            return;
+        }
+
         const updatedColorRanges = colorRanges.filter((_, i) => i !== index);
         setColorRanges(updatedColorRanges);
-    };
-
-    const handleApply = () => {
-        setColorRanges(colorRanges);
-        setAppliedColorMapping(true);
-        onClose();
+        setApplyColorMapping(true);
     };
 
     return (
@@ -146,22 +143,21 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                                 </div>
                                 <button
                                     onClick={() => removeColorRange(index)}
-                                    className="text-red-500 hover:text-red-600 transition-colors"
+                                    disabled={colorRanges.length === 1}
+                                    className={`transition-colors ${colorRanges.length === 1
+                                        ? "text-gray-400 cursor-not-allowed"
+                                        : "text-red-500 hover:text-red-600"}`}
                                 >
                                     <Trash2 className="h-5 w-5" />
                                 </button>
+
                             </div>
                         ))}
                     </div>
 
                     <button
                         onClick={addColorRange}
-                        disabled={colorRanges[colorRanges.length - 1].to === max}
-                        className={`mt-4 w-full flex items-center justify-center space-x-2 rounded-md py-2 px-4 transition 
-                            ${colorRanges[colorRanges.length - 1].to >= max
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-600 text-white"
-                            }`}
+                        className="mt-4 w-full flex items-center justify-center space-x-2 rounded-md py-2 px-4 transition bg-blue-500 hover:bg-blue-600 text-white"
                     >
                         <Plus className="h-4 w-4" />
                         <span>Add Range</span>
@@ -182,8 +178,8 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                                             position: "relative",
                                         }}
                                         className={`h-full border ${segment.color === POINT_CLOUD_COLORS.DEFAULT
-                                                ? "border-gray-300"
-                                                : "border-transparent"
+                                            ? "border-gray-300"
+                                            : "border-transparent"
                                             }`}
                                     ></div>
                                 );
@@ -203,13 +199,13 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                         onClick={onClose}
                         className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
                     >
-                        Cancel
+                        Close
                     </button>
                     <button
-                        onClick={handleApply}
-                        className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                        onClick={onResetColorMapping}
+                        className="px-4 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                     >
-                        Apply Changes
+                        Reset Changes
                     </button>
                 </div>
             </div>

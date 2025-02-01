@@ -12,19 +12,30 @@ import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
 export default function ThreeDPointCloudViewer() {
     const { fileUploads } = useAppContext();
     const containerRef = useRef(null);
-    const { pointSize, setPointSize, colorRanges, appliedColorMapping } = useThreeDDataViewerContext();
+    const {
+        pointSize,
+        setPointSize,
+        colorRanges,
+        applyColorMapping,
+        resetColorMapping,
+        setResetColorMapping,
+        altitudeRanges,
+        backgroundColor
+    } = useThreeDDataViewerContext();
 
     const loadedObjectRef = useRef(null);
     const rendererRef = useRef(null);
     const sceneRef = useRef(null);
     const cameraRef = useRef(null);
+    const originalColorsRef = useRef(null);
+    const originalGeometryRef = useRef(null);
 
     useEffect(() => {
         const file = fileUploads[TABS.THREED_DATA_VIEWER];
         if (!file) return;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111827);
+        scene.background = new THREE.Color(backgroundColor);
         sceneRef.current = scene;
 
         const camera = new THREE.PerspectiveCamera(
@@ -52,23 +63,30 @@ export default function ThreeDPointCloudViewer() {
             if (file.name.endsWith(FILE_TYPES.PCD)) {
                 const loader = new PCDLoader();
                 loadedObject = loader.parse(event.target.result);
+
+                if (loadedObject.material && loadedObject.material.vertexColors) {
+                    const colorsAttribute = loadedObject.geometry.getAttribute('color');
+                    if (colorsAttribute) {
+                        originalColorsRef.current = colorsAttribute.array.slice();
+                    }
+                }
             }
             else if (file.name.endsWith(FILE_TYPES.XYZ)) {
                 const loader = new XYZLoader();
                 const geometry = loader.parse(event.target.result);
-                // const material = new THREE.PointsMaterial({ size: 0.005, color: 0xffffff });
-                const material = new THREE.PointsMaterial({ size: 0.005, vertexColors: true });
+                const material = new THREE.PointsMaterial({ size: 0.005, vertexColors: false, color: POINT_CLOUD_COLORS.DEFAULT });
                 loadedObject = new THREE.Points(geometry, material);
             }
 
             if (loadedObject) {
                 if (loadedObject.material && loadedObject.material.size) {
-                    setPointSize(loadedObject.material.size)
+                    setPointSize(loadedObject.material.size);
                 }
                 loadedObject.frustumCulled = false;
+                originalGeometryRef.current = loadedObject.geometry.clone();
 
-                if (appliedColorMapping) {
-                    applyColorMapping(loadedObject);
+                if (applyColorMapping) {
+                    applyColorMappingOnObject(loadedObject);
                 }
 
                 scene.add(loadedObject);
@@ -104,7 +122,6 @@ export default function ThreeDPointCloudViewer() {
 
         const fitCameraToObject = (camera, controls, object, renderer, offset = 1.25) => {
             const boundingBox = new THREE.Box3().setFromObject(object);
-
             const center = boundingBox.getCenter(new THREE.Vector3());
             const size = boundingBox.getSize(new THREE.Vector3());
 
@@ -148,14 +165,17 @@ export default function ThreeDPointCloudViewer() {
             while (containerRef.current && containerRef.current.firstChild) {
                 containerRef.current.removeChild(containerRef.current.firstChild);
             }
+
+            originalColorsRef.current = null;
+            originalGeometryRef.current = null;
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
 
-    const applyColorMapping = (object) => {
+    const applyColorMappingOnObject = (object) => {
         if (!object.geometry || !object.geometry.attributes.position) return;
 
         const positions = object.geometry.attributes.position.array;
-        const colors = new Float32Array(positions.length);
+        const colors = new Float32Array((positions.length / 3) * 3);
         const color = new THREE.Color();
 
         for (let i = 0; i < positions.length; i += 3) {
@@ -185,6 +205,77 @@ export default function ThreeDPointCloudViewer() {
         }
     };
 
+    const applyAltitudeFilter = () => {
+        if (!loadedObjectRef.current || !originalGeometryRef.current) return;
+
+        const filteredGeometry = originalGeometryRef.current.clone();
+        const positions = filteredGeometry.attributes.position.array;
+        const totalPoints = positions.length / 3;
+
+        const indices = [];
+
+        for (let i = 0; i < totalPoints; i++) {
+            const y = positions[i * 3 + 1];
+            for (const range of altitudeRanges) {
+                if (y >= range.from && y <= range.to) {
+                    indices.push(i);
+                    break;
+                }
+            }
+        }
+
+        if (indices.length === 0) {
+            return;
+        }
+
+        const filteredPositions = new Float32Array(indices.length * 3);
+        let filteredColors = null;
+
+        if (originalColorsRef.current) {
+            filteredColors = new Float32Array(indices.length * 3);
+        }
+
+        for (let i = 0; i < indices.length; i++) {
+            const index = indices[i];
+            filteredPositions.set(
+                [
+                    positions[index * 3],
+                    positions[index * 3 + 1],
+                    positions[index * 3 + 2]
+                ],
+                i * 3
+            );
+
+            if (originalColorsRef.current) {
+                filteredColors.set(
+                    [
+                        originalColorsRef.current[index * 3],
+                        originalColorsRef.current[index * 3 + 1],
+                        originalColorsRef.current[index * 3 + 2]
+                    ],
+                    i * 3
+                );
+            }
+        }
+
+        filteredGeometry.setAttribute('position', new THREE.BufferAttribute(filteredPositions, 3));
+
+        if (filteredColors) {
+            filteredGeometry.setAttribute('color', new THREE.BufferAttribute(filteredColors, 3));
+        }
+
+        loadedObjectRef.current.geometry.dispose();
+        loadedObjectRef.current.geometry = filteredGeometry;
+
+        if (applyColorMapping) {
+            applyColorMappingOnObject(loadedObjectRef.current);
+        }
+
+        if (rendererRef.current && sceneRef.current && cameraRef.current) {
+            rendererRef.current.render(sceneRef.current, cameraRef.current);
+        }
+    };
+
     useEffect(() => {
         if (loadedObjectRef.current) {
             if (loadedObjectRef.current.material) {
@@ -199,19 +290,73 @@ export default function ThreeDPointCloudViewer() {
 
     useEffect(() => {
         if (loadedObjectRef.current) {
-            if (appliedColorMapping) {
-                applyColorMapping(loadedObjectRef.current);
-            } else {
-                loadedObjectRef.current.material.vertexColors = false;
-                loadedObjectRef.current.material.color.set(POINT_CLOUD_COLORS.DEFAULT);
-                loadedObjectRef.current.material.needsUpdate = true;
+            if (applyColorMapping) {
+                applyColorMappingOnObject(loadedObjectRef.current);
+            }
+            else {
+                if (loadedObjectRef.current.material.vertexColors) {
+                    if (originalColorsRef.current) {
+                        const colors = new Float32Array(originalColorsRef.current.length);
+                        colors.set(originalColorsRef.current);
+                        loadedObjectRef.current.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                        loadedObjectRef.current.material.vertexColors = true;
+                    }
+                    else {
+                        loadedObjectRef.current.material.vertexColors = false;
+                        loadedObjectRef.current.material.color.set(POINT_CLOUD_COLORS.DEFAULT);
+                    }
+                    loadedObjectRef.current.material.needsUpdate = true;
+                }
+                else {
+                    loadedObjectRef.current.material.color.set(POINT_CLOUD_COLORS.DEFAULT);
+                    loadedObjectRef.current.material.needsUpdate = true;
+                }
             }
 
             if (rendererRef.current && sceneRef.current && cameraRef.current) {
                 rendererRef.current.render(sceneRef.current, cameraRef.current);
             }
         }
-    }, [appliedColorMapping, colorRanges]);
+    }, [applyColorMapping, colorRanges]);
+
+    useEffect(() => {
+        if (resetColorMapping) {
+            if (loadedObjectRef.current) {
+                if (originalColorsRef.current) {
+                    const colors = new Float32Array(originalColorsRef.current.length);
+                    colors.set(originalColorsRef.current);
+                    loadedObjectRef.current.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                    loadedObjectRef.current.material.vertexColors = true;
+                }
+                else {
+                    loadedObjectRef.current.material.vertexColors = false;
+                    loadedObjectRef.current.material.color.set(POINT_CLOUD_COLORS.DEFAULT);
+                }
+                loadedObjectRef.current.material.needsUpdate = true;
+
+                if (rendererRef.current && sceneRef.current && cameraRef.current) {
+                    rendererRef.current.render(sceneRef.current, cameraRef.current);
+                }
+
+                if (setResetColorMapping) {
+                    setResetColorMapping(false);
+                }
+            }
+        }
+    }, [resetColorMapping, setResetColorMapping]);
+
+    useEffect(() => {
+        applyAltitudeFilter();
+    }, [altitudeRanges]);
+
+    useEffect(() => {
+        if (sceneRef.current) {
+            sceneRef.current.background = new THREE.Color(backgroundColor);
+            if (rendererRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+        }
+    }, [backgroundColor]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
