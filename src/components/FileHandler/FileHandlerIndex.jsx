@@ -32,7 +32,11 @@ export default function FileHandlerIndex() {
         <div className="w-full">
             {/* Show FileDetails if a file is uploaded, otherwise show FileUpload */}
             {fileUploads[activeTab] && fileDetails[activeTab] ?
-                <FileDetails fileDetailsData={fileDetails[activeTab]} onRefresh={onRefresh} />
+                <div>
+                    <FileDetails fileDetailsData={fileDetails[activeTab]} onRefresh={onRefresh} />
+                    <div className="p-3 border-b border-gray-400">
+                    </div>
+                </div>
                 :
                 <FileUpload updateFileUploads={updateFileUploads} updateFileDetails={updateFileDetails} />
             }
