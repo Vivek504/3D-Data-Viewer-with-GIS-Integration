@@ -6,23 +6,23 @@ import { ThreeDDataViewerContextProvider } from '../../contexts/ThreeDDataViewer
 
 export default function LayoutIndex() {
     return (
-        <div className="flex flex-col h-screen w-screen p-4">
-            {/* Top section with Left and Center Panels */}
-            <div className="flex flex-row h-4/5 gap-4">
-                <ThreeDDataViewerContextProvider>
-                    <div className="w-1/4">
+        <div className="flex flex-row h-screen w-screen p-4 gap-4">
+            <ThreeDDataViewerContextProvider>
+                {/* Left Section: Left Panel (4/5 height) & Bottom Panel (1/5 height) */}
+                <div className="flex flex-col w-1/4 h-full">
+                    <div className="h-4/5">
                         <LeftPanelIndex />
                     </div>
-                    <div className="w-3/4">
-                        <CenterPanelIndex />
+                    <div className="h-1/5 mt-4">
+                        <BottomPanelIndex />
                     </div>
-                </ThreeDDataViewerContextProvider>
-            </div>
+                </div>
 
-            {/* Bottom panel taking remaining 20% height */}
-            <div className="h-1/5 mt-4">
-                <BottomPanelIndex />
-            </div>
+                {/* Center Panel taking 3/4 width and full height */}
+                <div className="w-3/4 h-full">
+                    <CenterPanelIndex />
+                </div>
+            </ThreeDDataViewerContextProvider>
         </div>
     )
 }
