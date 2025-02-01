@@ -3,13 +3,15 @@ import mapboxgl from 'mapbox-gl';
 import { useAppContext } from '../../contexts/AppContext';
 import { TABS } from '../../constants/Tabs';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { GEOMETRY_TYPES, LAYER_TYPES } from "../../constants/Geometry";
+import FeatureDetailsPopup from './FeatureDetailsPopup';
 
 export default function GISDataViewer() {
     const { fileUploads, fileDetails } = useAppContext();
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
-
-    const [metadata, setMetadata] = useState(null);
+    const markersRef = useRef([]);
+    const [selectedFeature, setSelectedFeature] = useState(null);
 
     useEffect(() => {
         console.log('Loading the map...');
@@ -18,7 +20,6 @@ export default function GISDataViewer() {
         if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
 
         const geojsonData = fileDetails[TABS.GIS_VIEWER].fileContent;
-        console.log(geojsonData)
         const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
         if (!mapboxToken) {
@@ -44,81 +45,55 @@ export default function GISDataViewer() {
                 data: geojsonData
             });
 
-            const layerStyles = {
-                Point: {
-                    id: "point-layer",
-                    type: "circle",
-                    paint: { "circle-radius": 6, "circle-color": "#FF5733" }
-                },
-                LineString: {
-                    id: "line-layer",
-                    type: "line",
-                    paint: { "line-width": 2, "line-color": "#335BFF" }
-                },
-                Polygon: {
-                    id: "polygon-layer",
-                    type: "fill",
-                    paint: { "fill-color": "#33FF57", "fill-opacity": 0.5 }
-                }
-            };
+            geojsonData.features.forEach(feature => {
+                if (feature.geometry.type === "Point") {
+                    const el = document.createElement('div');
+                    el.className = 'marker';
+                    el.style.width = '25px';
+                    el.style.height = '35px';
+                    el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="%23FF5733"/></svg>')`;
+                    el.style.backgroundSize = '100%';
+                    el.style.cursor = 'pointer';
 
-            Object.entries(layerStyles).forEach(([type, style]) => {
-                if (geojsonData.features.some((feature) => feature.geometry.type === type)) {
-                    map.addLayer({
-                        id: style.id,
-                        type: style.type,
-                        source: "gis-data",
-                        paint: style.paint,
-                        filter: ["==", ["geometry-type"], type]
+                    el.addEventListener('click', () => {
+                        setSelectedFeature(feature);
                     });
+
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat(feature.geometry.coordinates)
+                        .addTo(map);
+
+                    markersRef.current.push(marker);
                 }
             });
 
-            const handleFeatureClick = (e, geometryType) => {
-                if (e.features.length > 0) {
-                    const feature = e.features[0];
-                    let coordinates;
-
-                    switch (geometryType) {
-                        case "Point":
-                            coordinates = feature.geometry.coordinates;
-                            break;
-                        case "LineString":
-                            coordinates = feature.geometry.coordinates;
-                            break;
-                        case "Polygon":
-                            coordinates = feature.geometry.coordinates.flat();
-                            break;
-                        default:
-                            coordinates = feature.geometry.coordinates;
-                    }
-
-                    setMetadata({
-                        geometryType,
-                        coordinates,
-                        properties: feature.properties || {},
+            [GEOMETRY_TYPES.LINE_STRING, GEOMETRY_TYPES.POLYGON].forEach(type => {
+                if (geojsonData.features.some(feature => feature.geometry.type === type)) {
+                    const layerId = `${type}-layer`;
+                    map.addLayer({
+                        id: layerId,
+                        type: type === GEOMETRY_TYPES.LINE_STRING ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
+                        source: "gis-data",
+                        paint: type === GEOMETRY_TYPES.LINE_STRING ? { "line-width": 2, "line-color": "#335BFF" } : { "fill-color": "#33FF57", "fill-opacity": 0.5 },
+                        filter: ["==", ["geometry-type"], type]
                     });
+
+                    map.on("click", layerId, (e) => {
+                        const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
+                        if (features.length > 0) {
+                            setSelectedFeature(features[0]);
+                        }
+                    });
+
                 }
-            };
-
-            map.on("click", "point-layer", (e) => handleFeatureClick(e, "Point"));
-            map.on("click", "line-layer", (e) => handleFeatureClick(e, "LineString"));
-            map.on("click", "polygon-layer", (e) => handleFeatureClick(e, "Polygon"));
-
-            ["point-layer", "line-layer", "polygon-layer"].forEach((layer) => {
-                map.on("mouseenter", layer, () => {
-                    map.getCanvas().style.cursor = "pointer";
-                });
-                map.on("mouseleave", layer, () => {
-                    map.getCanvas().style.cursor = "";
-                });
             });
 
             const bounds = new mapboxgl.LngLatBounds();
             geojsonData.features.forEach((feature) => {
-                if (feature.geometry.type === "Point") {
+                if (feature.geometry.type === GEOMETRY_TYPES.POINT) {
                     bounds.extend(feature.geometry.coordinates);
-                } else if (["LineString", "Polygon"].includes(feature.geometry.type)) {
+                }
+                else if ([GEOMETRY_TYPES.LINE_STRING, GEOMETRY_TYPES.POLYGON].includes(feature.geometry.type)) {
                     feature.geometry.coordinates.flat().forEach(coord => bounds.extend(coord));
                 }
             });
@@ -128,77 +103,21 @@ export default function GISDataViewer() {
             }
         });
 
-        return () => map.remove();
+        return () => {
+            markersRef.current.forEach(marker => marker.remove());
+            markersRef.current = [];
+            map.remove();
+        };
     }, [fileUploads[TABS.GIS_VIEWER], fileDetails[TABS.GIS_VIEWER]]);
-
-    const formatCoordinate = (coord) => coord.map(num => Number(num).toFixed(3)).join(", ");
-
-    const renderCoordinates = (coords) => {
-        if (!Array.isArray(coords[0])) {
-            return <span>{formatCoordinate(coords)}</span>;
-        }
-
-        return (
-            <ul className="list-disc list-inside">
-                {coords.map((coord, index) => (
-                    Array.isArray(coord[0])
-                        ? <li key={index}>
-                            <strong>Ring {index + 1}:</strong>
-                            <ul className="list-disc list-inside ml-4">
-                                {coord.map((c, i) => (
-                                    <li key={i}>{formatCoordinate(c)}</li>
-                                ))}
-                            </ul>
-                        </li>
-                        : <li key={index}>{formatCoordinate(coord)}</li>
-                ))}
-            </ul>
-        );
-    };
-
-    const renderProperties = (props) => {
-        return (
-            <ul className="list-disc list-inside">
-                {Object.entries(props).map(([key, value]) => (
-                    <li key={key}>
-                        <strong>{key}:</strong> {typeof value === 'object' && value !== null ? renderProperties(value) : String(value)}
-                    </li>
-                ))}
-            </ul>
-        );
-    };
 
     return (
         <div className="w-full h-full relative">
             <div ref={mapContainerRef} className="w-full h-full" />
-
-            {metadata && (
-                <div className="absolute top-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-xs overflow-auto z-50">
-                    <h3 className="text-lg font-semibold">Feature Info</h3>
-                    <p className="text-gray-700 text-sm">
-                        <strong>Geometry Type:</strong> {metadata.geometryType}
-                    </p>
-                    <div className="text-gray-700 text-sm mb-2">
-                        <strong>Coordinates:</strong>
-                        <div className="ml-4">
-                            {renderCoordinates(metadata.coordinates)}
-                        </div>
-                    </div>
-                    {Object.keys(metadata.properties).length > 0 && (
-                        <div className="mt-2">
-                            <strong>Properties:</strong>
-                            <div className="ml-4">
-                                {renderProperties(metadata.properties)}
-                            </div>
-                        </div>
-                    )}
-                    <button
-                        onClick={() => setMetadata(null)}
-                        className="mt-3 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                    >
-                        Close
-                    </button>
-                </div>
+            {selectedFeature && (
+                <FeatureDetailsPopup
+                    feature={selectedFeature}
+                    onClose={() => setSelectedFeature(null)}
+                />
             )}
         </div>
     );
