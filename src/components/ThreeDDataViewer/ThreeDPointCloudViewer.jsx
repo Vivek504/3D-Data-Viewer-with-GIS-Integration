@@ -19,7 +19,8 @@ export default function ThreeDPointCloudViewer() {
         applyColorMapping,
         resetColorMapping,
         setResetColorMapping,
-        altitudeRanges
+        altitudeRanges,
+        backgroundColor
     } = useThreeDDataViewerContext();
 
     const loadedObjectRef = useRef(null);
@@ -34,7 +35,7 @@ export default function ThreeDPointCloudViewer() {
         if (!file) return;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111827);
+        scene.background = new THREE.Color(backgroundColor);
         sceneRef.current = scene;
 
         const camera = new THREE.PerspectiveCamera(
@@ -347,6 +348,15 @@ export default function ThreeDPointCloudViewer() {
     useEffect(() => {
         applyAltitudeFilter();
     }, [altitudeRanges]);
+
+    useEffect(() => {
+        if (sceneRef.current) {
+            sceneRef.current.background = new THREE.Color(backgroundColor);
+            if (rendererRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+        }
+    }, [backgroundColor]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
