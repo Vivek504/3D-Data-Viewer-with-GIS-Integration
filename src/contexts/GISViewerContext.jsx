@@ -8,9 +8,12 @@ export const useGISViewerContext = () => useContext(GISViewerContext);
 export const GISViewerContextProvider = ({ children }) => {
     const [mapStyle, setMapStyle] = useState(MAP_STYLES.STREETS);
 
+    const [searchText, setSearchText] = useState();
+
     return (
         <GISViewerContext.Provider value={{
-            mapStyle, setMapStyle
+            mapStyle, setMapStyle,
+            searchText, setSearchText
         }}>
             {children}
         </GISViewerContext.Provider>

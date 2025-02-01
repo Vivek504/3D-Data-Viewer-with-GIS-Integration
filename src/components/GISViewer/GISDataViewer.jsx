@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useAppContext } from '../../contexts/AppContext';
 import { TABS } from '../../constants/Tabs';
@@ -7,6 +7,8 @@ import { GEOMETRY_TYPES, LAYER_TYPES } from "../../constants/Geometry";
 import FeatureDetailsPopup from './FeatureDetails/FeatureDetailsPopup';
 import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
+import MapSearch from './MapSearch/MapSearch';
+import { filterGeoJSONData } from '../../utils/GeoJSONFilterUtils';
 
 export default function GISDataViewer() {
     const { fileUploads, fileDetails } = useAppContext();
@@ -14,23 +16,14 @@ export default function GISDataViewer() {
     const mapRef = useRef(null);
     const markersRef = useRef([]);
     const [selectedFeature, setSelectedFeature] = useState(null);
-    const { mapStyle } = useGISViewerContext();
+    const { mapStyle, searchText, setSearchText } = useGISViewerContext();
 
-    const addDataLayers = () => {
+    const addPointMarkers = useCallback((geojsonData) => {
         const map = mapRef.current;
         if (!map) return;
 
-        const file = fileUploads[TABS.GIS_VIEWER];
-        if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
-
-        const geojsonData = fileDetails[TABS.GIS_VIEWER].fileContent;
-
-        if (!map.getSource("gis-data")) {
-            map.addSource("gis-data", {
-                type: "geojson",
-                data: geojsonData
-            });
-        }
+        markersRef.current.forEach(marker => marker.remove());
+        markersRef.current = [];
 
         geojsonData.features.forEach(feature => {
             if (feature.geometry.type === "Point") {
@@ -53,10 +46,32 @@ export default function GISDataViewer() {
                 markersRef.current.push(marker);
             }
         });
+    }, []);
+
+    const updateDataLayers = useCallback(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const file = fileUploads[TABS.GIS_VIEWER];
+        if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
+
+        const geojsonData = fileDetails[TABS.GIS_VIEWER].fileContent;
+        const filteredData = filterGeoJSONData(geojsonData, searchText);
+
+        if (map.getSource("gis-data")) {
+            map.getSource("gis-data").setData(filteredData);
+        }
+        else {
+            map.addSource("gis-data", {
+                type: "geojson",
+                data: filteredData
+            });
+        }
+
+        addPointMarkers(filteredData);
 
         [GEOMETRY_TYPES.LINE_STRING, GEOMETRY_TYPES.POLYGON].forEach(type => {
             const layerId = `${type}-layer`;
-
             if (!map.getLayer(layerId)) {
                 map.addLayer({
                     id: layerId,
@@ -78,58 +93,69 @@ export default function GISDataViewer() {
         });
 
         const bounds = new mapboxgl.LngLatBounds();
-        geojsonData.features.forEach((feature) => {
+        filteredData.features.forEach((feature) => {
             if (feature.geometry.type === GEOMETRY_TYPES.POINT) {
                 bounds.extend(feature.geometry.coordinates);
             }
             else if ([GEOMETRY_TYPES.LINE_STRING, GEOMETRY_TYPES.POLYGON].includes(feature.geometry.type)) {
-                feature.geometry.coordinates.flat().forEach(coord => bounds.extend(coord));
+                feature.geometry.coordinates.flat(Infinity).forEach(coord => {
+                    if (Array.isArray(coord) && coord.length >= 2) {
+                        bounds.extend(coord);
+                    }
+                });
             }
         });
-
         if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { padding: 50 });
         }
-    };
+    }, [fileUploads, fileDetails, searchText, addPointMarkers]);
 
     useEffect(() => {
+        console.log("loading the map use effect");
+
         const file = fileUploads[TABS.GIS_VIEWER];
         if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
-
         const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-
         if (!mapboxToken) return;
-
         mapboxgl.accessToken = mapboxToken;
-
         mapRef.current = new mapboxgl.Map({
             container: mapContainerRef.current,
             style: MAP_STYLE_URLS[mapStyle],
             center: [-106.3468, 56.1304],
             zoom: 4,
         });
-
         const map = mapRef.current;
         map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-        map.on("load", addDataLayers);
+        map.on("load", () => {
+            updateDataLayers();
+        });
 
         return () => {
             markersRef.current.forEach(marker => marker.remove());
             markersRef.current = [];
             map.remove();
         };
-    }, [fileUploads[TABS.GIS_VIEWER], fileDetails[TABS.GIS_VIEWER]]);
+    }, [fileUploads, fileDetails, mapStyle, updateDataLayers]);
 
     useEffect(() => {
+        console.log("map style use effect")
         if (mapRef.current) {
             mapRef.current.setStyle(MAP_STYLE_URLS[mapStyle]);
-            mapRef.current.once("styledata", addDataLayers);
+            mapRef.current.once("styledata", updateDataLayers);
         }
-    }, [mapStyle]);
+    }, [mapStyle, updateDataLayers]);
+
+    useEffect(() => {
+        console.log("search text use effect")
+        if (mapRef.current && mapRef.current.isStyleLoaded()) {
+            updateDataLayers();
+        }
+    }, [searchText, updateDataLayers]);
 
     return (
         <div className="w-full h-full relative">
+            <MapSearch searchText={searchText} setSearchText={setSearchText} />
             <div ref={mapContainerRef} className="w-full h-full" />
             {selectedFeature && (
                 <FeatureDetailsPopup
