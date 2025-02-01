@@ -1,6 +1,7 @@
 import React from 'react'
 import MapStyleFilter from '../../GISViewer/MapStyleFilter/MapStyleFilter'
 import { Settings } from 'lucide-react'
+import ColorFilter from '../../GISViewer/ColorFilter/ColorFilter'
 
 export default function GISFilters() {
     return (
@@ -11,6 +12,7 @@ export default function GISFilters() {
             </div>
 
             <MapStyleFilter />
+            <ColorFilter />
         </div>
     )
 }

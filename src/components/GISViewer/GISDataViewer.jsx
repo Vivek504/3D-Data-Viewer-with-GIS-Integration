@@ -16,7 +16,7 @@ export default function GISDataViewer() {
     const mapRef = useRef(null);
     const markersRef = useRef([]);
     const [selectedFeature, setSelectedFeature] = useState(null);
-    const { mapStyle, searchText, setSearchText } = useGISViewerContext();
+    const { mapStyle, searchText, setSearchText, pointColor, lineColor, polygonColor } = useGISViewerContext();
 
     const addPointMarkers = useCallback((geojsonData) => {
         const map = mapRef.current;
@@ -26,12 +26,12 @@ export default function GISDataViewer() {
         markersRef.current = [];
 
         geojsonData.features.forEach(feature => {
-            if (feature.geometry.type === "Point") {
+            if (feature.geometry.type === GEOMETRY_TYPES.POINT) {
                 const el = document.createElement('div');
                 el.className = 'marker';
                 el.style.width = '25px';
                 el.style.height = '35px';
-                el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="%23FF5733"/></svg>')`;
+                el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="${encodeURIComponent(pointColor)}"/></svg>')`;
                 el.style.backgroundSize = '100%';
                 el.style.cursor = 'pointer';
 
@@ -78,8 +78,8 @@ export default function GISDataViewer() {
                     type: type === GEOMETRY_TYPES.LINE_STRING ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
                     source: "gis-data",
                     paint: type === GEOMETRY_TYPES.LINE_STRING
-                        ? { "line-width": 2, "line-color": "#335BFF" }
-                        : { "fill-color": "#33FF57", "fill-opacity": 0.5 },
+                        ? { "line-width": 2, "line-color": lineColor }
+                        : { "fill-color": polygonColor, "fill-opacity": 0.5 },
                     filter: ["==", ["geometry-type"], type]
                 });
 
@@ -110,6 +110,24 @@ export default function GISDataViewer() {
         }
     }, [fileUploads, fileDetails, searchText, addPointMarkers]);
 
+    const updateLayerColors = useCallback(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        if (map.getLayer(GEOMETRY_TYPES.LINE_STRING + "-layer")) {
+            map.setPaintProperty(GEOMETRY_TYPES.LINE_STRING + "-layer", "line-color", lineColor);
+        }
+
+        if (map.getLayer(GEOMETRY_TYPES.POLYGON + "-layer")) {
+            map.setPaintProperty(GEOMETRY_TYPES.POLYGON + "-layer", "fill-color", polygonColor);
+        }
+
+        markersRef.current.forEach(marker => {
+            const el = marker.getElement();
+            el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="${encodeURIComponent(pointColor)}"/></svg>')`;
+        });
+    }, [lineColor, polygonColor, pointColor]);
+
     useEffect(() => {
         console.log("loading the map use effect");
 
@@ -136,7 +154,7 @@ export default function GISDataViewer() {
             markersRef.current = [];
             map.remove();
         };
-    }, [fileUploads, fileDetails, mapStyle, updateDataLayers]);
+    }, [fileUploads, fileDetails, updateDataLayers]);
 
     useEffect(() => {
         console.log("map style use effect")
@@ -152,6 +170,12 @@ export default function GISDataViewer() {
             updateDataLayers();
         }
     }, [searchText, updateDataLayers]);
+
+    useEffect(() => {
+        console.log("color filter use effect");
+        updateLayerColors();
+    }, [pointColor, lineColor, polygonColor]);
+
 
     return (
         <div className="w-full h-full relative">

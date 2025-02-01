@@ -5,7 +5,7 @@ import Dropdown from "../../shared/Dropdown";
 
 export default function MapStyleFilter() {
     const { mapStyle, setMapStyle } = useGISViewerContext();
-    console.log(mapStyle)
+    
     return (
         <div className="w-full max-w-xs">
             <Dropdown
