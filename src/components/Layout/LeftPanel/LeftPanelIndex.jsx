@@ -4,6 +4,7 @@ import { useAppContext } from '../../../contexts/AppContext';
 import { TABS } from '../../../constants/Tabs';
 import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
 import ThreeDFilters from './ThreeDFilters';
+import GISFilters from './GISFilters';
 
 export default function LeftPanelIndex() {
     const { activeTab, fileUploads } = useAppContext();
@@ -15,6 +16,8 @@ export default function LeftPanelIndex() {
             <FileHandlerIndex />
 
             {activeTab === TABS.THREED_DATA_VIEWER && fileUploads[activeTab] && pointSize && <ThreeDFilters />}
+
+            {activeTab === TABS.GIS_VIEWER && fileUploads[activeTab] && <GISFilters />}
         </div>
     )
 }
