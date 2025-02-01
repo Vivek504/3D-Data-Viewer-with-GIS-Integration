@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
+import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
 
 export default function PointSizeAdjustment() {
     const { pointSize, setPointSize } = useThreeDDataViewerContext();
