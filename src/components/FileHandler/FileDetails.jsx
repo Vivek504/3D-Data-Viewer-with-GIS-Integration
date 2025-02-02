@@ -52,12 +52,28 @@ export default function FileDetails({ fileDetailsData, onRefresh }) {
                         </div>
                     }
                     {fileDetailsData.boundingBox &&
-                        <div className="flex justify-between">
-                            <span className="font-medium text-gray-500">Dimensions:</span>
-                            <span className="font-medium">
-                                {fileDetailsData.boundingBox.width.toFixed(2)} x {fileDetailsData.boundingBox.height.toFixed(2)} x {fileDetailsData.boundingBox.depth.toFixed(2)} units
-                            </span>
-                        </div>
+                        <>
+                            <div className="flex justify-between">
+                                <span className="font-medium text-gray-500">Dimensions:</span>
+                                <span className="font-medium">
+                                    {fileDetailsData.boundingBox.width.toFixed(2)} x {fileDetailsData.boundingBox.height.toFixed(2)} x {fileDetailsData.boundingBox.depth.toFixed(2)} units
+                                </span>
+                            </div>
+                            <div className="text-gray-600 text-xs">
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-500">X Range:</span>
+                                    <span>{fileDetailsData.boundingBox.min.x.toFixed(2)} to {fileDetailsData.boundingBox.max.x.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-500">Y Range:</span>
+                                    <span>{fileDetailsData.boundingBox.min.y.toFixed(2)} to {fileDetailsData.boundingBox.max.y.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="font-medium text-gray-500">Z Range:</span>
+                                    <span>{fileDetailsData.boundingBox.min.z.toFixed(2)} to {fileDetailsData.boundingBox.max.z.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </>
                     }
                 </div>
             )}
