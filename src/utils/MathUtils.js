@@ -1,16 +1,34 @@
-export const getDecimalScale = (num) => {
-    const decimalPart = num.toString().split(".")[1];
-    return decimalPart ? Math.pow(10, -decimalPart.length) : 1;
+export const getDecimalPart = (num) => {
+    const decimalPartStr = num.toString().split(".")[1];
+    return decimalPartStr ? decimalPartStr : "0";
+};
+
+export const getMinValueForDecimalScale = (num) => {
+    const decimalPart = getDecimalPart(num);
+    return decimalPart ? formatNumber(Math.pow(10, -decimalPart.length), decimalPart.length) : 1;
+};
+
+export const getMaxValueForDecimalScale = (num) => {
+    const scale = getMinValueForDecimalScale(num);
+    return scale * 9;
+};
+
+export const generateMinDecimalScale = (scale) => {
+    return formatNumber(Math.pow(10, -scale), scale);
+};
+
+export const generateMaxDecimalScale = (scale) => {
+    return formatNumber(Math.pow(10, -scale) * 9, scale);
 };
 
 export const getStepSizeForNum = (num) => {
-    return getDecimalScale(num);
+    return getMinValueForDecimalScale(num);
 };
 
 export const getStepSizeForRange = (min, max) => {
-    return Math.min(getDecimalScale(min), getDecimalScale(max));
+    return Math.min(getMinValueForDecimalScale(min), getMinValueForDecimalScale(max));
 };
 
-export const formatNumber = (value) => {
-    return parseFloat(value.toFixed(10));
+export const formatNumber = (num, decimalPartLength) => {
+    return parseFloat(num.toFixed(decimalPartLength));
 };

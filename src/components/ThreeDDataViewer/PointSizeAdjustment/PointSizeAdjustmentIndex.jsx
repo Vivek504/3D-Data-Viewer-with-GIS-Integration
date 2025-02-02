@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
-import { getStepSizeForNum, formatNumber } from '../../../utils/MathUtils';
+import { getStepSizeForNum, formatNumber, getMaxValueForDecimalScale, getDecimalPart, getMinValueForDecimalScale, generateMinDecimalScale, generateMaxDecimalScale } from '../../../utils/MathUtils';
 
 export default function PointSizeAdjustment() {
     const { pointSize, setPointSize } = useThreeDDataViewerContext();
-    const [inputValue, setInputValue] = useState(formatNumber(pointSize));
+    const [inputValue, setInputValue] = useState(formatNumber(pointSize, getDecimalPart(pointSize).length));
 
     const handleInputChange = (event) => {
         let inputStr = event.target.value;
@@ -19,26 +19,42 @@ export default function PointSizeAdjustment() {
 
         const value = parseFloat(inputStr);
         if (!isNaN(value) && value > 0) {
-            setPointSize(formatNumber(value));
+            setPointSize(formatNumber(value, getDecimalPart(value).length));
         }
     };
 
     const handleIncrement = () => {
-        const stepSize = getStepSizeForNum(pointSize);
-        const newPointSize = formatNumber(pointSize + stepSize);
+        let newPointSize;
+        const decimalPart = getDecimalPart(pointSize);
+        if(pointSize === getMaxValueForDecimalScale(pointSize)){
+            newPointSize = generateMinDecimalScale(decimalPart.length - 1);
+        }
+        else{
+            const stepSize = getStepSizeForNum(pointSize);
+            newPointSize = formatNumber(pointSize + stepSize, decimalPart.length);
+        }
+        
         setPointSize(newPointSize);
         setInputValue(newPointSize.toString());
     };
 
     const handleDecrement = () => {
-        const stepSize = getStepSizeForNum(pointSize);
-        const newPointSize = formatNumber(Math.max(stepSize, pointSize - stepSize));
+        let newPointSize;
+        const decimalPart = getDecimalPart(pointSize);
+        if(pointSize === getMinValueForDecimalScale(pointSize)){
+            newPointSize = generateMaxDecimalScale(decimalPart.length + 1);
+        }
+        else{
+            const stepSize = getStepSizeForNum(pointSize);
+            newPointSize = formatNumber(pointSize - stepSize, decimalPart.length);     
+        }
+
         setPointSize(newPointSize);
         setInputValue(newPointSize.toString());
     };
 
     useEffect(() => {
-        setInputValue(formatNumber(pointSize).toString());
+        setInputValue(formatNumber(pointSize, getDecimalPart(pointSize).length).toString());
     }, [pointSize]);
 
     return (
