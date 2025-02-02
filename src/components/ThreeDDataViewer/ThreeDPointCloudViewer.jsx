@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import * as THREE from 'three';
 import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader';
@@ -8,9 +8,12 @@ import { TABS } from '../../constants/Tabs';
 import { FILE_TYPES } from '../../constants/FileTypes';
 import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
 import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
+import { addLogs } from '../../utils/LogUtils';
+import { LOG_TYPES } from '../../constants/LogTypes';
+import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
 
 export default function ThreeDPointCloudViewer() {
-    const { fileUploads } = useAppContext();
+    const { fileUploads, setLogs } = useAppContext();
     const containerRef = useRef(null);
     const {
         pointSize,
@@ -31,8 +34,10 @@ export default function ThreeDPointCloudViewer() {
     const originalGeometryRef = useRef(null);
 
     useEffect(() => {
-        console.log('component loading');
-    }, []);
+        if(loadedObjectRef){
+            addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.DISPLAYED_3D_DATA, setLogs);
+        }
+    }, [loadedObjectRef]);
 
     useEffect(() => {
         const file = fileUploads[TABS.THREED_DATA_VIEWER];
@@ -187,21 +192,19 @@ export default function ThreeDPointCloudViewer() {
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
 
-    const applyPointSizeFilter = useCallback(() => {
-        console.log('applying point size filter: ' + pointSize)
+    const applyPointSizeFilter = () => {
+        addLogs(LOG_TYPES.USER, USER_ACTIONS.ADJUSTED_POINT_SIZE, setLogs);
         if (loadedObjectRef.current && pointSize) {
             if (loadedObjectRef.current.material && loadedObjectRef.current.material.size != pointSize) {
                 loadedObjectRef.current.material.size = pointSize;
                 loadedObjectRef.current.material.needsUpdate = true;
-                console.log('applied filter');
 
                 if (rendererRef.current && sceneRef.current && cameraRef.current) {
                     rendererRef.current.render(sceneRef.current, cameraRef.current);
-                    console.log('updated render');
                 }
             }
         }
-    }, [pointSize]);
+    };
 
     const applyColorMappingOnObject = (object) => {
         if (!object.geometry || !object.geometry.attributes.position) return;
@@ -310,7 +313,6 @@ export default function ThreeDPointCloudViewer() {
 
     useEffect(() => {
         if (loadedObjectRef.current && pointSize && loadedObjectRef.current.material && loadedObjectRef.current.material.size != pointSize) {
-            console.log('call while use effect')
             applyPointSizeFilter();
         }
     }, [pointSize, applyPointSizeFilter]);

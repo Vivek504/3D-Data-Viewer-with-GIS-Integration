@@ -4,11 +4,15 @@ import { Box, Map, Maximize2 } from 'lucide-react'
 import { useAppContext } from '../../../contexts/AppContext';
 import ThreeDDataViewerIndex from '../../ThreeDDataViewer/ThreeDDataViewerIndex';
 import GISViewerIndex from '../../GISViewer/GISViewerIndex';
+import { addLogs } from '../../../utils/LogUtils';
+import { LOG_TYPES } from '../../../constants/LogTypes';
+import { USER_ACTIONS } from '../../../constants/LogsMessages';
 
 export default function CenterPanelIndex() {
-    const { activeTab, setActiveTab, fileUploads } = useAppContext();
+    const { activeTab, setActiveTab, fileUploads, setLogs } = useAppContext();
 
     const handleTabClick = (tab) => {
+        addLogs(LOG_TYPES.USER, USER_ACTIONS.SWITCHED_TAB, setLogs);
         setActiveTab(tab);
     };
 
