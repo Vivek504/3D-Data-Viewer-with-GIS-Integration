@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react"
 import { Plus, X, Trash2 } from "lucide-react"
 import { POINT_CLOUD_COLORS } from "../../../constants/ThreeDViewerColors"
-import { getStepSize } from "../../../utils/MathUtils";
+import { getStepSizeForRange } from "../../../utils/MathUtils";
 
 export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, setApplyColorMapping, onResetColorMapping }) {
-    const stepSize = getStepSize(min, max);
+    const stepSize = getStepSizeForRange(min, max);
 
     const [segments, setSegments] = useState([]);
 

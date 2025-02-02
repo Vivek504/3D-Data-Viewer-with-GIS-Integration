@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
+import { getStepSizeForNum, formatNumber } from '../../../utils/MathUtils';
 
 export default function PointSizeAdjustment() {
     const { pointSize, setPointSize } = useThreeDDataViewerContext();
     const [inputValue, setInputValue] = useState(formatNumber(pointSize));
-
-    const calculateStepSize = (value) => {
-        const magnitude = Math.floor(Math.log10(value));
-        return parseFloat((Math.pow(10, magnitude - 1)).toFixed(10));
-    };
-
-    function formatNumber(value) {
-        return parseFloat(value.toFixed(10));
-    }
 
     const handleInputChange = (event) => {
         let inputStr = event.target.value;
@@ -32,13 +24,15 @@ export default function PointSizeAdjustment() {
     };
 
     const handleIncrement = () => {
-        const newPointSize = formatNumber(pointSize + calculateStepSize(pointSize));
+        const stepSize = getStepSizeForNum(pointSize);
+        const newPointSize = formatNumber(pointSize + stepSize);
         setPointSize(newPointSize);
         setInputValue(newPointSize.toString());
     };
 
     const handleDecrement = () => {
-        const newPointSize = formatNumber(Math.max(0.0000001, pointSize - calculateStepSize(pointSize)));
+        const stepSize = getStepSizeForNum(pointSize);
+        const newPointSize = formatNumber(Math.max(stepSize, pointSize - stepSize));
         setPointSize(newPointSize);
         setInputValue(newPointSize.toString());
     };
@@ -54,8 +48,8 @@ export default function PointSizeAdjustment() {
                     Point Size
                 </label>
                 <div className="flex items-center min-w-0 space-x-2">
-                    <button 
-                        onClick={handleDecrement} 
+                    <button
+                        onClick={handleDecrement}
                         className="px-2 py-1 border rounded-md text-gray-600 hover:bg-gray-200">
                         -
                     </button>
@@ -67,8 +61,8 @@ export default function PointSizeAdjustment() {
                         pattern="^\d*\.?\d*$"
                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                     />
-                    <button 
-                        onClick={handleIncrement} 
+                    <button
+                        onClick={handleIncrement}
                         className="px-2 py-1 border rounded-md text-gray-600 hover:bg-gray-200">
                         +
                     </button>

@@ -1,9 +1,9 @@
 import React from "react"
 import { Plus, X, Trash2 } from "lucide-react"
-import { getStepSize } from "../../../utils/MathUtils"
+import { getStepSizeForRange } from "../../../utils/MathUtils"
 
 export default function AltitudeRangeFilterPopup({ min, max, altitudeRanges, setAltitudeRanges, onClose, onResetAltitudeRanges }) {
-    const stepSize = getStepSize(min, max);
+    const stepSize = getStepSizeForRange(min, max);
 
     const addAltitudeRange = () => {
         const lastRange = altitudeRanges[altitudeRanges.length - 1];
