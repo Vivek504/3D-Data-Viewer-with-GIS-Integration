@@ -2,17 +2,9 @@ import React, { useState } from 'react'
 import FileUpload from './FileUpload'
 import FileDetails from './FileDetails'
 import { useAppContext } from '../../contexts/AppContext';
-import { TABS } from '../../constants/Tabs';
 
 export default function FileHandlerIndex() {
-    // Access global state for active tab and uploaded files
-    const { activeTab, fileUploads, setFileUploads } = useAppContext();
-
-    // Local state to store file details per tab
-    const [fileDetails, setFileDetails] = useState({
-        [TABS.THREED_DATA_VIEWER]: null,
-        [TABS.GIS_VIEWER]: null,
-    });
+    const { activeTab, fileUploads, setFileUploads, fileDetails, setFileDetails } = useAppContext();
 
     // Updates the file upload state based on the active tab
     const updateFileUploads = (file) => {
@@ -40,7 +32,11 @@ export default function FileHandlerIndex() {
         <div className="w-full">
             {/* Show FileDetails if a file is uploaded, otherwise show FileUpload */}
             {fileUploads[activeTab] && fileDetails[activeTab] ?
-                <FileDetails fileDetailsData={fileDetails[activeTab]} onRefresh={onRefresh} />
+                <div>
+                    <FileDetails fileDetailsData={fileDetails[activeTab]} onRefresh={onRefresh} />
+                    <div className="p-3 border-b border-gray-400">
+                    </div>
+                </div>
                 :
                 <FileUpload updateFileUploads={updateFileUploads} updateFileDetails={updateFileDetails} />
             }

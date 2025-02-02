@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { RefreshCcw } from 'lucide-react'
+import { FileText, RefreshCcw } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog';
 
 export default function FileDetails({ fileDetailsData, onRefresh }) {
@@ -25,9 +25,12 @@ export default function FileDetails({ fileDetailsData, onRefresh }) {
         <div>
             {/* Header section with title and refresh button */}
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-m">
-                    File Details
-                </h3>
+                <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    <h3 className="font-medium text-m">
+                        File Details
+                    </h3>
+                </div>
                 <RefreshCcw className="h-5 w-5 cursor-pointer text-blue-600 hover:text-blue-700" onClick={handleRefreshClick} />
             </div>
 
@@ -42,16 +45,20 @@ export default function FileDetails({ fileDetailsData, onRefresh }) {
                         <span className="font-medium text-gray-500">Size:</span>
                         <span className="font-medium">{(fileDetailsData.fileSize / (1024)).toFixed(2)} KB</span>
                     </div>
-                    <div className="flex justify-between">
-                        <span className="font-medium text-gray-500">Points:</span>
-                        <span className="font-medium">{fileDetailsData.numPoints.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="font-medium text-gray-500">Dimensions:</span>
-                        <span className="font-medium">
-                            {fileDetailsData.boundingBox.width.toFixed(2)} x {fileDetailsData.boundingBox.height.toFixed(2)} x {fileDetailsData.boundingBox.depth.toFixed(2)} units
-                        </span>
-                    </div>
+                    {fileDetailsData.numPoints &&
+                        <div className="flex justify-between">
+                            <span className="font-medium text-gray-500">Points:</span>
+                            <span className="font-medium">{fileDetailsData.numPoints.toLocaleString()}</span>
+                        </div>
+                    }
+                    {fileDetailsData.boundingBox &&
+                        <div className="flex justify-between">
+                            <span className="font-medium text-gray-500">Dimensions:</span>
+                            <span className="font-medium">
+                                {fileDetailsData.boundingBox.width.toFixed(2)} x {fileDetailsData.boundingBox.height.toFixed(2)} x {fileDetailsData.boundingBox.depth.toFixed(2)} units
+                            </span>
+                        </div>
+                    }
                 </div>
             )}
 
