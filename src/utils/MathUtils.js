@@ -10,7 +10,7 @@ export const getMinValueForDecimalScale = (num) => {
 
 export const getMaxValueForDecimalScale = (num) => {
     const scale = getMinValueForDecimalScale(num);
-    return scale * 9;
+    return formatNumber(scale * 9, getDecimalPart(scale).length);
 };
 
 export const generateMinDecimalScale = (scale) => {

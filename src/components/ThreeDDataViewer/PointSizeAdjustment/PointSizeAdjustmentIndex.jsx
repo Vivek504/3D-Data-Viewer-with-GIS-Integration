@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
 import { getStepSizeForNum, formatNumber, getMaxValueForDecimalScale, getDecimalPart, getMinValueForDecimalScale, generateMinDecimalScale, generateMaxDecimalScale } from '../../../utils/MathUtils';
+import RangeSlider from '../../shared/RangeSlider';
 
 export default function PointSizeAdjustment() {
     const { pointSize, setPointSize } = useThreeDDataViewerContext();
@@ -26,14 +27,14 @@ export default function PointSizeAdjustment() {
     const handleIncrement = () => {
         let newPointSize;
         const decimalPart = getDecimalPart(pointSize);
-        if(pointSize === getMaxValueForDecimalScale(pointSize)){
+        if (pointSize === getMaxValueForDecimalScale(pointSize)) {
             newPointSize = generateMinDecimalScale(decimalPart.length - 1);
         }
-        else{
+        else {
             const stepSize = getStepSizeForNum(pointSize);
             newPointSize = formatNumber(pointSize + stepSize, decimalPart.length);
         }
-        
+
         setPointSize(newPointSize);
         setInputValue(newPointSize.toString());
     };
@@ -41,16 +42,22 @@ export default function PointSizeAdjustment() {
     const handleDecrement = () => {
         let newPointSize;
         const decimalPart = getDecimalPart(pointSize);
-        if(pointSize === getMinValueForDecimalScale(pointSize)){
+        if (pointSize === getMinValueForDecimalScale(pointSize)) {
             newPointSize = generateMaxDecimalScale(decimalPart.length + 1);
         }
-        else{
+        else {
             const stepSize = getStepSizeForNum(pointSize);
-            newPointSize = formatNumber(pointSize - stepSize, decimalPart.length);     
+            newPointSize = formatNumber(pointSize - stepSize, decimalPart.length);
         }
 
         setPointSize(newPointSize);
         setInputValue(newPointSize.toString());
+    };
+
+    const handleSliderChange = (event) => {
+        const value = parseFloat(event.target.value);
+        setPointSize(value);
+        setInputValue(value.toString());
     };
 
     useEffect(() => {
@@ -83,6 +90,13 @@ export default function PointSizeAdjustment() {
                         +
                     </button>
                 </div>
+                <RangeSlider
+                    min={getMinValueForDecimalScale(pointSize)}
+                    max={getMaxValueForDecimalScale(pointSize)}
+                    step={getMinValueForDecimalScale(pointSize)}
+                    value={pointSize}
+                    onChange={handleSliderChange}
+                />
             </div>
         </div>
     );
