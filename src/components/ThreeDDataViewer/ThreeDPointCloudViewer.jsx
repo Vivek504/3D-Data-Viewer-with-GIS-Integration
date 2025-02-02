@@ -91,6 +91,11 @@ export default function ThreeDPointCloudViewer() {
 
                 scene.add(loadedObject);
                 loadedObjectRef.current = loadedObject;
+                
+                if (altitudeRanges) {
+                    applyAltitudeFilter();
+                }
+                
                 fitCameraToObject(camera, controls, loadedObject, renderer);
             }
         };
