@@ -80,7 +80,9 @@ export default function ThreeDPointCloudViewer() {
 
             if (loadedObject) {
                 if (loadedObject.material && loadedObject.material.size) {
-                    setPointSize(loadedObject.material.size);
+                    if(!pointSize){
+                        setPointSize(loadedObject.material.size);
+                    }
                 }
                 loadedObject.frustumCulled = false;
                 originalGeometryRef.current = loadedObject.geometry.clone();
@@ -91,11 +93,15 @@ export default function ThreeDPointCloudViewer() {
 
                 scene.add(loadedObject);
                 loadedObjectRef.current = loadedObject;
-                
+
+                if(pointSize){
+                    applyPointSizeFilter();
+                }
+
                 if (altitudeRanges) {
                     applyAltitudeFilter();
                 }
-                
+
                 fitCameraToObject(camera, controls, loadedObject, renderer);
             }
         };
@@ -175,6 +181,18 @@ export default function ThreeDPointCloudViewer() {
             originalGeometryRef.current = null;
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
+
+    const applyPointSizeFilter = () => {
+        if (loadedObjectRef.current) {
+            if (loadedObjectRef.current.material) {
+                loadedObjectRef.current.material.size = pointSize;
+                loadedObjectRef.current.material.needsUpdate = true;
+            }
+            if (rendererRef.current && sceneRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+        }
+    }
 
     const applyColorMappingOnObject = (object) => {
         if (!object.geometry || !object.geometry.attributes.position) return;
@@ -282,15 +300,7 @@ export default function ThreeDPointCloudViewer() {
     };
 
     useEffect(() => {
-        if (loadedObjectRef.current) {
-            if (loadedObjectRef.current.material) {
-                loadedObjectRef.current.material.size = pointSize;
-                loadedObjectRef.current.material.needsUpdate = true;
-            }
-            if (rendererRef.current && sceneRef.current && cameraRef.current) {
-                rendererRef.current.render(sceneRef.current, cameraRef.current);
-            }
-        }
+        applyPointSizeFilter();
     }, [pointSize]);
 
     useEffect(() => {
