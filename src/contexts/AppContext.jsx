@@ -33,13 +33,26 @@ export const AppContextProvider = ({ children }) => {
         message: SYSTEM_FEEDBACK.AWAITING_FILE_UPLOAD
     }]);
 
+    // Reset app context states
+    const resetAppContext = () => {
+        setFileUploads((prev) => ({
+            ...prev,
+            [activeTab]: null
+        }));
+        setFileDetails((prev) => ({
+            ...prev,
+            [activeTab]: null
+        }));
+    }
+
     return (
         // Providing state and state-modifying functions to child components
         <AppContext.Provider value={{
             activeTab, setActiveTab,
             fileUploads, setFileUploads,
             fileDetails, setFileDetails,
-            logs, setLogs
+            logs, setLogs,
+            resetAppContext
         }}>
             {children}
         </AppContext.Provider>

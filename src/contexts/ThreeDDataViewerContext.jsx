@@ -16,6 +16,18 @@ export const ThreeDDataViewerContextProvider = ({ children }) => {
 
     const [backgroundColor, setBackgroundColor] = useState(SCENE_BACKGROUND_COLORS.DEFAULT);
 
+    const resetThreeDContext = () => {
+        setPointSize();
+
+        setColorRanges([]);
+        setApplyColorMapping(false);
+        setResetColorMapping(false);
+
+        setAltitudeRanges([]);
+
+        setBackgroundColor(SCENE_BACKGROUND_COLORS.DEFAULT);
+    }
+
     return (
         <ThreeDDataViewerContext.Provider value={{
             pointSize, setPointSize,
@@ -23,7 +35,8 @@ export const ThreeDDataViewerContextProvider = ({ children }) => {
             applyColorMapping, setApplyColorMapping,
             resetColorMapping, setResetColorMapping,
             altitudeRanges, setAltitudeRanges,
-            backgroundColor, setBackgroundColor
+            backgroundColor, setBackgroundColor,
+            resetThreeDContext
         }}>
             {children}
         </ThreeDDataViewerContext.Provider>
