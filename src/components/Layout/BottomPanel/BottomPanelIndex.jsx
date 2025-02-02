@@ -1,5 +1,5 @@
 import React from 'react';
-import LogsViewer from '../../Logs/LogsViewer';
+import LogsViewer from '../../LogsViewer/LogsViewer';
 
 export default function BottomPanelIndex() {
     return (
