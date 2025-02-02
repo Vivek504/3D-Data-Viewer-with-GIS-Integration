@@ -8,6 +8,7 @@ import { useAppContext } from '../../../contexts/AppContext';
 import { addLogs } from '../../../utils/LogUtils';
 import { LOG_TYPES } from '../../../constants/LogTypes';
 import { USER_ACTIONS } from '../../../constants/LogsMessages';
+import { getDecimalPrecisionLength } from '../../../utils/MathUtils';
 
 export default function AltitudeColorPopupIndex() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -15,11 +16,14 @@ export default function AltitudeColorPopupIndex() {
     const { colorRanges, setColorRanges, setApplyColorMapping, setResetColorMapping } = useThreeDDataViewerContext();
     const initialColorRangesRef = useRef(null);
 
+    const minAltitude = fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.min.y;
+    const maxAltitude = fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y;
+
     const resetColorRanges = () => {
         setColorRanges([{
             id: 1,
-            from: parseFloat(fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.min.y.toFixed(3)),
-            to: parseFloat(fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y.toFixed(3)),
+            from: parseFloat(minAltitude.toFixed(getDecimalPrecisionLength(minAltitude))),
+            to: parseFloat(maxAltitude.toFixed(getDecimalPrecisionLength(maxAltitude))),
             color: POINT_CLOUD_COLORS.DEFAULT
         }]);
     };
@@ -59,8 +63,8 @@ export default function AltitudeColorPopupIndex() {
             </button>
             {isPopupOpen && (
                 <AltitudeColorPopup
-                    min={parseFloat(fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.min.y.toFixed(3))}
-                    max={parseFloat(fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y.toFixed(3))}
+                    min={parseFloat(minAltitude.toFixed(getDecimalPrecisionLength(minAltitude)))}
+                    max={parseFloat(maxAltitude.toFixed(getDecimalPrecisionLength(maxAltitude)))}
                     colorRanges={colorRanges}
                     setColorRanges={setColorRanges}
                     setApplyColorMapping={setApplyColorMapping}

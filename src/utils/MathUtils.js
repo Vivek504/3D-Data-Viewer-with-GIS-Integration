@@ -32,3 +32,21 @@ export const getStepSizeForRange = (min, max) => {
 export const formatNumber = (num, decimalPartLength) => {
     return parseFloat(num.toFixed(decimalPartLength));
 };
+
+export const getDecimalPrecisionLength = (num) => {
+    const numStr = num.toString();
+    const decimalPart = numStr.split(".")[1] || "";
+
+    let leadingZeros = 0;
+    for (const char of decimalPart) {
+        if (char === "0") {
+            leadingZeros++;
+        }
+        else {
+            break;
+        }
+    }
+
+    const totalLength = leadingZeros + 3;
+    return totalLength;
+};
