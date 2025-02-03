@@ -3,6 +3,7 @@ import React from 'react';
 
 export default function MessageDialog({ message, onClose }) {
     return (
+        // Overlay background with blur effect
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
             <div className="bg-white rounded-md p-6 w-full max-w-sm shadow-md text-center relative">
                 <button
@@ -12,7 +13,7 @@ export default function MessageDialog({ message, onClose }) {
                 >
                     <X size={20} className="text-gray-500" />
                 </button>
-                <p className="text-gray-800 mt-2">{message}</p>
+                <p className="text-red-500 mt-2">{message}</p>
             </div>
         </div>
     );

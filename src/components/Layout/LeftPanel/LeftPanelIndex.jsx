@@ -15,9 +15,11 @@ export default function LeftPanelIndex() {
             {/* File handler section */}
             <FileHandlerIndex />
 
+            {/* Display 3D filters only when a file is uploaded and point size is available */}
             {activeTab === TABS.THREED_DATA_VIEWER && fileUploads[activeTab] && pointSize && <ThreeDFilters />}
 
+            {/* Display GIS filters only when a file is uploaded */}
             {activeTab === TABS.GIS_VIEWER && fileUploads[activeTab] && <GISFilters />}
         </div>
-    )
+    );
 }

@@ -8,11 +8,13 @@ import BackgroundColorIndex from '../../ThreeDDataViewer/BackgroundColor/Backgro
 export default function ThreeDFilters() {
     return (
         <div className="space-y-4">
+            {/* Section title */}
             <div className="flex items-center space-x-2">
                 <Settings className="w-5 h-5" />
                 <h2 className="font-medium text-m">Style Setting</h2>
             </div>
 
+            {/* Filter components for 3D visualization */}
             <PointSizeAdjustmentIndex />
             <AltitudeColorPopupIndex />
             <AltitudeRangeFilterIndex />
@@ -20,4 +22,3 @@ export default function ThreeDFilters() {
         </div>
     );
 }
-
