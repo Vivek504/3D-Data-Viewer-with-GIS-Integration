@@ -64,7 +64,6 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                 color: POINT_CLOUD_COLORS.DEFAULT,
             },
         ]);
-        setApplyColorMapping(true);
     };
 
     // Updates a specific color range
@@ -73,7 +72,6 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
             i === index ? { ...colorRange, [key]: value } : colorRange
         );
         setColorRanges(updatedColorRanges);
-        setApplyColorMapping(true);
     };
 
     // Removes a color range unless it's the last one
@@ -84,7 +82,6 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
 
         const updatedColorRanges = colorRanges.filter((_, i) => i !== index);
         setColorRanges(updatedColorRanges);
-        setApplyColorMapping(true);
     };
 
     return (

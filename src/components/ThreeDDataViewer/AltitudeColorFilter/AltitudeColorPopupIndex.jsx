@@ -43,6 +43,7 @@ export default function AltitudeColorPopupIndex() {
 
     // Closes the popup and logs changes if any modifications were made
     const handleClosePopup = () => {
+        setApplyColorMapping(true);
         setIsPopupOpen(false);
 
         if (initialColorRangesRef.current !== JSON.stringify(colorRanges)) {
