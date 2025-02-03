@@ -12,7 +12,7 @@ export const GISViewerContextProvider = ({ children }) => {
 
     const [searchText, setSearchText] = useState();
     const [filteredGeometryTypes, setFilteredGeometryTypes] = useState(
-        Object.fromEntries(Object.values(GEOMETRY_TYPES).map(type => [type, false]))
+        Object.fromEntries(Object.values(GEOMETRY_TYPES).map(type => [type, true]))
     );
 
     const [pointColor, setPointColor] = useState(GEOMETRY_TYPE_COLOR.POINT.DEFAULT);

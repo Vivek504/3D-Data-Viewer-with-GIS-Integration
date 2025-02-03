@@ -9,6 +9,8 @@ import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
 import MapSearch from './MapSearch/MapSearch';
 import { filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText } from '../../utils/GeoJSONFilterUtils';
+import MessageDialog from '../shared/MessageDialog';
+import { FILE_MESSAGES, GIS_DATA_VIEWER_MESSAGES } from '../../constants/ErrorMessages';
 
 export default function GISDataViewer() {
     const { fileUploads, fileDetails } = useAppContext();
@@ -23,6 +25,8 @@ export default function GISDataViewer() {
         pointColor, lineColor, polygonColor,
         filteredData, setFilteredData
     } = useGISViewerContext();
+    const [showMessageDialog, setShowMessageDialog] = useState(false);
+    const [errorMessage, setErroMessage] = useState();
 
     const addPointMarkers = (geojsonData) => {
         const map = mapRef.current;
@@ -63,8 +67,11 @@ export default function GISDataViewer() {
 
     const updateFilteredDataBySearchText = (searchText) => {
         const geojsonData = getGeoJsonData();
-        if (filteredData) {
-            setFilteredData(filterGeoJSONDataBySearchText(geojsonData, searchText));
+        if (geojsonData) {
+            const filteredDataByGeometryType = filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes);
+            if (filteredDataByGeometryType) {
+                setFilteredData(filterGeoJSONDataBySearchText(filteredDataByGeometryType, searchText));
+            }
         }
     }
 
@@ -76,71 +83,82 @@ export default function GISDataViewer() {
     }
 
     const updateDataLayers = () => {
-        const map = mapRef.current;
-        if (!map) return;
+        try {
+            const map = mapRef.current;
+            if (!map) return;
 
-        if (!filteredData) return;
+            if (!filteredData) return;
 
-        if (map.getSource("gis-data")) {
-            map.getSource("gis-data").setData(filteredData);
-        }
-        else {
-            map.addSource("gis-data", {
-                type: "geojson",
-                data: filteredData
+            if (map.getSource("gis-data")) {
+                map.getSource("gis-data").setData(filteredData);
+            }
+            else {
+                map.addSource("gis-data", {
+                    type: "geojson",
+                    data: filteredData
+                });
+            }
+
+            if (filteredData.features.length === 0) {
+                setShowMessageDialog(true);
+                setErroMessage(GIS_DATA_VIEWER_MESSAGES.NO_DATA_FOUND);
+            }
+
+            addPointMarkers(filteredData);
+
+            [GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]].forEach(type => {
+                const layerId = `${type}-layer`;
+                if (!map.getLayer(layerId)) {
+                    map.addLayer({
+                        id: layerId,
+                        type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
+                        source: "gis-data",
+                        paint: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]
+                            ? { "line-width": 3, "line-color": lineColor }
+                            : { "fill-color": polygonColor, "fill-opacity": 0.5 },
+                        filter: ["==", ["geometry-type"], type]
+                    });
+
+                    map.on("click", layerId, (e) => {
+                        const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
+                        if (features.length > 0) {
+                            setSelectedFeature(features[0]);
+                        }
+                    });
+                }
             });
-        }
 
-        addPointMarkers(filteredData);
+            const bounds = new mapboxgl.LngLatBounds();
 
-        [GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]].forEach(type => {
-            const layerId = `${type}-layer`;
-            if (!map.getLayer(layerId)) {
-                map.addLayer({
-                    id: layerId,
-                    type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
-                    source: "gis-data",
-                    paint: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]
-                        ? { "line-width": 3, "line-color": lineColor }
-                        : { "fill-color": polygonColor, "fill-opacity": 0.5 },
-                    filter: ["==", ["geometry-type"], type]
-                });
-
-                map.on("click", layerId, (e) => {
-                    const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
-                    if (features.length > 0) {
-                        setSelectedFeature(features[0]);
-                    }
-                });
-            }
-        });
-
-        const bounds = new mapboxgl.LngLatBounds();
-
-        filteredData.features.forEach((feature) => {
-            if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]) {
-                bounds.extend(feature.geometry.coordinates);
-            }
-            else if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]) {
-                feature.geometry.coordinates.forEach(coord => {
-                    if (Array.isArray(coord) && coord.length >= 2) {
-                        bounds.extend(coord);
-                    }
-                });
-            }
-            else if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]) {
-                feature.geometry.coordinates.forEach(ring => {
-                    ring.forEach(coord => {
+            filteredData.features.forEach((feature) => {
+                if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]) {
+                    bounds.extend(feature.geometry.coordinates);
+                }
+                else if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]) {
+                    feature.geometry.coordinates.forEach(coord => {
                         if (Array.isArray(coord) && coord.length >= 2) {
                             bounds.extend(coord);
                         }
                     });
-                });
-            }
-        });
+                }
+                else if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]) {
+                    feature.geometry.coordinates.forEach(ring => {
+                        ring.forEach(coord => {
+                            if (Array.isArray(coord) && coord.length >= 2) {
+                                bounds.extend(coord);
+                            }
+                        });
+                    });
+                }
+            });
 
-        if (!bounds.isEmpty()) {
-            map.fitBounds(bounds, { padding: 50, maxZoom: 7 });
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds, { padding: 50, maxZoom: 7 });
+            }
+        }
+        catch (error) {
+            setShowMessageDialog(true);
+            setErroMessage(FILE_MESSAGES.INVALID_FILE);
         }
     };
 
@@ -163,8 +181,6 @@ export default function GISDataViewer() {
     };
 
     useEffect(() => {
-        console.log("loading the map use effect");
-
         const file = fileUploads[TABS.GIS_VIEWER];
         if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
 
@@ -197,7 +213,6 @@ export default function GISDataViewer() {
     }, [fileUploads, fileDetails]);
 
     useEffect(() => {
-        console.log("map style use effect")
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             mapRef.current.setStyle(MAP_STYLE_URLS[mapStyle]);
             mapRef.current.once("styledata", updateDataLayers);
@@ -205,22 +220,18 @@ export default function GISDataViewer() {
     }, [mapStyle]);
 
     useEffect(() => {
-        console.log("search text use effect");
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             updateFilteredDataBySearchText(searchText);
         }
     }, [searchText]);
 
     useEffect(() => {
-        console.log("filter by geometry types");
-        console.log(filteredGeometryTypes)
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             updateFilteredDataByGeometryType();
         }
     }, [filteredGeometryTypes]);
 
     useEffect(() => {
-        console.log("data is filtered - call the update layers");
         if (filteredData) {
             if (mapRef.current && mapRef.current.isStyleLoaded()) {
                 updateDataLayers();
@@ -229,7 +240,6 @@ export default function GISDataViewer() {
     }, [filteredData]);
 
     useEffect(() => {
-        console.log("color filter use effect");
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             updateLayerColors();
         }
@@ -246,6 +256,13 @@ export default function GISDataViewer() {
                 <FeatureDetailsPopup
                     feature={selectedFeature}
                     onClose={() => setSelectedFeature(null)}
+                />
+            )}
+            {/* Error message popup if invalid file is uploaded */}
+            {showMessageDialog && (
+                <MessageDialog
+                    message={errorMessage}
+                    onClose={() => setShowMessageDialog(false)}
                 />
             )}
         </div>
