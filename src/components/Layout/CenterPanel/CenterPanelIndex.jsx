@@ -1,6 +1,6 @@
-import React from 'react'
-import { TABS } from '../../../constants/Tabs'
-import { Box, Map, Maximize2 } from 'lucide-react'
+import React from 'react';
+import { TABS } from '../../../constants/Tabs';
+import { Box, Map, Maximize2 } from 'lucide-react';
 import { useAppContext } from '../../../contexts/AppContext';
 import ThreeDDataViewerIndex from '../../ThreeDDataViewer/ThreeDDataViewerIndex';
 import GISViewerIndex from '../../GISViewer/GISViewerIndex';
@@ -11,6 +11,7 @@ import { USER_ACTIONS } from '../../../constants/LogsMessages';
 export default function CenterPanelIndex() {
     const { activeTab, setActiveTab, fileUploads, setLogs } = useAppContext();
 
+    // Handles tab switching and logs the action
     const handleTabClick = (tab) => {
         addLogs(LOG_TYPES.USER, USER_ACTIONS.SWITCHED_TAB, setLogs);
         setActiveTab(tab);
@@ -18,6 +19,7 @@ export default function CenterPanelIndex() {
 
     return (
         <div className="flex-1 flex flex-col h-full w-full">
+            {/* Tabs for switching between 3D Data Viewer and GIS Viewer */}
             <div className="border-b-white bg-white px-4">
                 <div className="flex space-x-4">
                     <button
@@ -45,18 +47,21 @@ export default function CenterPanelIndex() {
                 </div>
             </div>
 
+            {/* Content area where the appropriate viewer is displayed */}
             <div className="flex-1 bg-gray-50 p-4">
                 <div className="h-full text-gray-400 bg-white rounded-lg shadow-sm border-gray flex items-center justify-center">
                     {!fileUploads[activeTab] ? (
+                        // Display message when no file is uploaded
                         <div className="text-gray-400">
                             <Maximize2 className="h-16 w-16 mx-auto mb-4" />
                             <p>Upload a file to begin visualization</p>
                         </div>
                     ) : (
+                        // Render the appropriate viewer based on the active tab
                         activeTab === TABS.THREED_DATA_VIEWER ? <ThreeDDataViewerIndex /> : <GISViewerIndex />
                     )}
                 </div>
             </div>
         </div>
-    )
+    );
 }

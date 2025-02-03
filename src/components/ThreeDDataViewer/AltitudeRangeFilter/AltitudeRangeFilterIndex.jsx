@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react';
 import { useThreeDDataViewerContext } from '../../../contexts/ThreeDDataViewerContext';
 import { useAppContext } from '../../../contexts/AppContext';
 import { TABS } from '../../../constants/Tabs';
@@ -9,7 +9,7 @@ import { addLogs } from '../../../utils/LogUtils';
 import { USER_ACTIONS } from '../../../constants/LogsMessages';
 import { getDecimalPrecisionLength } from '../../../utils/MathUtils';
 
-export default function AltitudeRangeFilter() {
+export default function AltitudeRangeFilterIndex() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const { fileDetails, setLogs } = useAppContext();
     const { altitudeRanges, setAltitudeRanges } = useThreeDDataViewerContext();
@@ -18,6 +18,7 @@ export default function AltitudeRangeFilter() {
     const minAltitude = fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.min.y;
     const maxAltitude = fileDetails[TABS.THREED_DATA_VIEWER].boundingBox.max.y;
 
+    // Resets altitude ranges to default values
     const resetAltitudeRanges = () => {
         setAltitudeRanges([{
             id: 1,
@@ -26,15 +27,18 @@ export default function AltitudeRangeFilter() {
         }]);
     };
 
+    // Resets altitude range filtering
     const onResetAltitudeRanges = () => {
         resetAltitudeRanges();
     };
 
+    // Opens the altitude range popup and stores the initial state
     const handleOpenPopup = () => {
         initialAltitudeRangesRef.current = JSON.stringify(altitudeRanges);
         setIsPopupOpen(true);
     };
 
+    // Closes the popup and logs changes if any modifications were made
     const handleClosePopup = () => {
         setIsPopupOpen(false);
 
@@ -47,11 +51,11 @@ export default function AltitudeRangeFilter() {
         if (altitudeRanges.length === 0) {
             resetAltitudeRanges();
         }
-    }, [])
-
+    }, []);
 
     return (
         <div className="w-full">
+            {/* Button to open altitude range filter popup */}
             <button
                 onClick={handleOpenPopup}
                 className="w-full flex items-center justify-center space-x-2 bg-blue-500 text-white font-medium rounded-md py-2 px-4 hover:bg-blue-600 transition"
@@ -59,6 +63,8 @@ export default function AltitudeRangeFilter() {
                 <Sliders className="w-5 h-5" />
                 <span>Altitude Range Filter</span>
             </button>
+
+            {/* Render the altitude range filter popup when open */}
             {isPopupOpen && (
                 <AltitudeRangeFilterPopup
                     min={parseFloat(minAltitude.toFixed(getDecimalPrecisionLength(minAltitude)))}
@@ -70,5 +76,5 @@ export default function AltitudeRangeFilter() {
                 />
             )}
         </div>
-    )
+    );
 }

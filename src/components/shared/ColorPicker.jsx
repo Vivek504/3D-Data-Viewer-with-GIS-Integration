@@ -4,6 +4,7 @@ import { RotateCcw } from 'lucide-react';
 export default function ColorPicker({ label, color, setColor, defaultColor, handleLog }) {
     const [tempColor] = useState(color);
 
+    // Checks if the color has changed and logs the action
     const checkChangeInColor = () => {
         if (tempColor != color) {
             handleLog();
@@ -12,6 +13,7 @@ export default function ColorPicker({ label, color, setColor, defaultColor, hand
 
     return (
         <div className="relative w-full max-w-xs">
+            {/* Label and Reset Button */}
             <div className="flex items-center justify-between">
                 <label className="text-sm text-gray-700">{label}</label>
                 <button
@@ -25,6 +27,8 @@ export default function ColorPicker({ label, color, setColor, defaultColor, hand
                     <RotateCcw className="h-4 w-4 text-gray-700" />
                 </button>
             </div>
+
+            {/* Color Picker Input */}
             <input
                 type="color"
                 value={color}

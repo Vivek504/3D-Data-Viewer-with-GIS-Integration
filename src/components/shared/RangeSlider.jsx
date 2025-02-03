@@ -3,6 +3,7 @@ import React from "react";
 export default function RangeSlider({ min, max, step, value, onChange }) {
     return (
         <div className="w-full max-w-md mx-auto">
+            {/* Range input slider */}
             <input
                 type="range"
                 min={min}
