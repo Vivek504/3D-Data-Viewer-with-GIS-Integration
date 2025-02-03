@@ -12,7 +12,7 @@ export default function MessageDialog({ message, onClose }) {
                 >
                     <X size={20} className="text-gray-500" />
                 </button>
-                <p className="text-gray-800 mt-2">{message}</p>
+                <p className="text-red-500 mt-2">{message}</p>
             </div>
         </div>
     );

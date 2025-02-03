@@ -1,8 +1,10 @@
+// System feedback messages for logging in the application
 export const SYSTEM_FEEDBACK = Object.freeze({
     AWAITING_FILE_UPLOAD: 'waiting for user to upload a file',
     DISPLAYED_3D_DATA: '3D data successfully loaded on the screen'
 });
 
+// User actions for logging in the application
 export const USER_ACTIONS = Object.freeze({
     UPLOADED_PCD_FILE: 'uploaded a .pcd file',
     UPLOADED_XYZ_FILE: 'uploaded a .xyz file',
