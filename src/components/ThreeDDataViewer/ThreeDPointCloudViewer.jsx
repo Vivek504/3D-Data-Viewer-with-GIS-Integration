@@ -115,7 +115,6 @@ export default function ThreeDPointCloudViewer() {
 
                 // Apply point size filter if necessary
                 if (pointSize && loadedObjectRef.current.material && loadedObjectRef.current.material.size != pointSize) {
-                    console.log('call while loading');
                     applyPointSizeFilter();
                 }
 

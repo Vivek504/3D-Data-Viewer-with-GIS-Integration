@@ -18,7 +18,7 @@ export default function GISDataViewer() {
     const [selectedFeature, setSelectedFeature] = useState(null);
     const { mapStyle, searchText, setSearchText, pointColor, lineColor, polygonColor } = useGISViewerContext();
 
-    const addPointMarkers = useCallback((geojsonData) => {
+    const addPointMarkers = (geojsonData) => {
         const map = mapRef.current;
         if (!map) return;
 
@@ -46,9 +46,9 @@ export default function GISDataViewer() {
                 markersRef.current.push(marker);
             }
         });
-    }, []);
+    };
 
-    const updateDataLayers = useCallback(() => {
+    const updateDataLayers = () => {
         const map = mapRef.current;
         if (!map) return;
 
@@ -93,24 +93,35 @@ export default function GISDataViewer() {
         });
 
         const bounds = new mapboxgl.LngLatBounds();
+
         filteredData.features.forEach((feature) => {
             if (feature.geometry.type === GEOMETRY_TYPES.POINT) {
                 bounds.extend(feature.geometry.coordinates);
             }
-            else if ([GEOMETRY_TYPES.LINE_STRING, GEOMETRY_TYPES.POLYGON].includes(feature.geometry.type)) {
-                feature.geometry.coordinates.flat(Infinity).forEach(coord => {
+            else if (feature.geometry.type === GEOMETRY_TYPES.LINE_STRING) {
+                feature.geometry.coordinates.forEach(coord => {
                     if (Array.isArray(coord) && coord.length >= 2) {
                         bounds.extend(coord);
                     }
                 });
             }
+            else if (feature.geometry.type === GEOMETRY_TYPES.POLYGON) {
+                feature.geometry.coordinates.forEach(ring => {
+                    ring.forEach(coord => {
+                        if (Array.isArray(coord) && coord.length >= 2) {
+                            bounds.extend(coord);
+                        }
+                    });
+                });
+            }
         });
-        if (!bounds.isEmpty()) {
-            map.fitBounds(bounds, { padding: 50 });
-        }
-    }, [fileUploads, fileDetails, searchText, addPointMarkers]);
 
-    const updateLayerColors = useCallback(() => {
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, { padding: 50, maxZoom: 7 });
+        }
+    };
+
+    const updateLayerColors = () => {
         const map = mapRef.current;
         if (!map) return;
 
@@ -126,7 +137,7 @@ export default function GISDataViewer() {
             const el = marker.getElement();
             el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="${encodeURIComponent(pointColor)}"/></svg>')`;
         });
-    }, [lineColor, polygonColor, pointColor]);
+    };
 
     useEffect(() => {
         console.log("loading the map use effect");
@@ -140,8 +151,9 @@ export default function GISDataViewer() {
             container: mapContainerRef.current,
             style: MAP_STYLE_URLS[mapStyle],
             center: [-106.3468, 56.1304],
-            zoom: 4,
+            zoom: 7,
         });
+
         const map = mapRef.current;
         map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
@@ -154,26 +166,28 @@ export default function GISDataViewer() {
             markersRef.current = [];
             map.remove();
         };
-    }, [fileUploads, fileDetails, updateDataLayers]);
+    }, [fileUploads, fileDetails]);
 
     useEffect(() => {
         console.log("map style use effect")
-        if (mapRef.current) {
+        if (mapRef.current && mapRef.current.isStyleLoaded()) {
             mapRef.current.setStyle(MAP_STYLE_URLS[mapStyle]);
             mapRef.current.once("styledata", updateDataLayers);
         }
-    }, [mapStyle, updateDataLayers]);
+    }, [mapStyle]);
 
     useEffect(() => {
-        console.log("search text use effect")
+        console.log("search text use effect");
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             updateDataLayers();
         }
-    }, [searchText, updateDataLayers]);
+    }, [searchText]);
 
     useEffect(() => {
         console.log("color filter use effect");
-        updateLayerColors();
+        if (mapRef.current && mapRef.current.isStyleLoaded()) {
+            updateLayerColors();
+        }
     }, [pointColor, lineColor, polygonColor]);
 
 

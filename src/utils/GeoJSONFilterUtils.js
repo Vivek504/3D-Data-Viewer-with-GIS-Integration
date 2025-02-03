@@ -11,9 +11,14 @@ export function filterGeoJSONData(geojsonData, searchText) {
                 return true;
             }
 
-            if (val && typeof val === 'object') {
+            if (val && val instanceof Object) {
                 return searchInObject(val);
             }
+
+            if (val && !isNaN(val) && !isNaN(lowerSearch)) {
+                return Number(val) === Number(lowerSearch);
+            }
+
             return val !== null && val.toString().toLowerCase().includes(lowerSearch);
         });
     };
