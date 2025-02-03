@@ -3,12 +3,12 @@ import mapboxgl from 'mapbox-gl';
 import { useAppContext } from '../../contexts/AppContext';
 import { TABS } from '../../constants/Tabs';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { GEOMETRY_TYPES, LAYER_TYPES } from "../../constants/Geometry";
+import { GEOMETRY_TYPE_LABELS, GEOMETRY_TYPES, LAYER_TYPES } from "../../constants/Geometry";
 import FeatureDetailsPopup from './FeatureDetails/FeatureDetailsPopup';
 import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
 import MapSearch from './MapSearch/MapSearch';
-import { filterGeoJSONData } from '../../utils/GeoJSONFilterUtils';
+import { filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText } from '../../utils/GeoJSONFilterUtils';
 
 export default function GISDataViewer() {
     const { fileUploads, fileDetails } = useAppContext();
@@ -16,7 +16,13 @@ export default function GISDataViewer() {
     const mapRef = useRef(null);
     const markersRef = useRef([]);
     const [selectedFeature, setSelectedFeature] = useState(null);
-    const { mapStyle, searchText, setSearchText, pointColor, lineColor, polygonColor } = useGISViewerContext();
+    const {
+        mapStyle,
+        searchText, setSearchText,
+        filteredGeometryTypes, setFilteredGeometryTypes,
+        pointColor, lineColor, polygonColor,
+        filteredData, setFilteredData
+    } = useGISViewerContext();
 
     const addPointMarkers = (geojsonData) => {
         const map = mapRef.current;
@@ -26,7 +32,7 @@ export default function GISDataViewer() {
         markersRef.current = [];
 
         geojsonData.features.forEach(feature => {
-            if (feature.geometry.type === GEOMETRY_TYPES.POINT) {
+            if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]) {
                 const el = document.createElement('div');
                 el.className = 'marker';
                 el.style.width = '25px';
@@ -48,15 +54,32 @@ export default function GISDataViewer() {
         });
     };
 
+    const getGeoJsonData = () => {
+        const file = fileUploads[TABS.GIS_VIEWER];
+        if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
+
+        return fileDetails[TABS.GIS_VIEWER].fileContent;
+    }
+
+    const updateFilteredDataBySearchText = (searchText) => {
+        const geojsonData = getGeoJsonData();
+        if (filteredData) {
+            setFilteredData(filterGeoJSONDataBySearchText(geojsonData, searchText));
+        }
+    }
+
+    const updateFilteredDataByGeometryType = () => {
+        const geojsonData = getGeoJsonData();
+        if (geojsonData) {
+            setFilteredData(filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes))
+        }
+    }
+
     const updateDataLayers = () => {
         const map = mapRef.current;
         if (!map) return;
 
-        const file = fileUploads[TABS.GIS_VIEWER];
-        if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
-
-        const geojsonData = fileDetails[TABS.GIS_VIEWER].fileContent;
-        const filteredData = filterGeoJSONData(geojsonData, searchText);
+        if (!filteredData) return;
 
         if (map.getSource("gis-data")) {
             map.getSource("gis-data").setData(filteredData);
@@ -70,14 +93,14 @@ export default function GISDataViewer() {
 
         addPointMarkers(filteredData);
 
-        [GEOMETRY_TYPES.LINE_STRING, GEOMETRY_TYPES.POLYGON].forEach(type => {
+        [GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]].forEach(type => {
             const layerId = `${type}-layer`;
             if (!map.getLayer(layerId)) {
                 map.addLayer({
                     id: layerId,
-                    type: type === GEOMETRY_TYPES.LINE_STRING ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
+                    type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
                     source: "gis-data",
-                    paint: type === GEOMETRY_TYPES.LINE_STRING
+                    paint: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]
                         ? { "line-width": 3, "line-color": lineColor }
                         : { "fill-color": polygonColor, "fill-opacity": 0.5 },
                     filter: ["==", ["geometry-type"], type]
@@ -95,17 +118,17 @@ export default function GISDataViewer() {
         const bounds = new mapboxgl.LngLatBounds();
 
         filteredData.features.forEach((feature) => {
-            if (feature.geometry.type === GEOMETRY_TYPES.POINT) {
+            if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]) {
                 bounds.extend(feature.geometry.coordinates);
             }
-            else if (feature.geometry.type === GEOMETRY_TYPES.LINE_STRING) {
+            else if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]) {
                 feature.geometry.coordinates.forEach(coord => {
                     if (Array.isArray(coord) && coord.length >= 2) {
                         bounds.extend(coord);
                     }
                 });
             }
-            else if (feature.geometry.type === GEOMETRY_TYPES.POLYGON) {
+            else if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]) {
                 feature.geometry.coordinates.forEach(ring => {
                     ring.forEach(coord => {
                         if (Array.isArray(coord) && coord.length >= 2) {
@@ -125,12 +148,12 @@ export default function GISDataViewer() {
         const map = mapRef.current;
         if (!map) return;
 
-        if (map.getLayer(GEOMETRY_TYPES.LINE_STRING + "-layer")) {
-            map.setPaintProperty(GEOMETRY_TYPES.LINE_STRING + "-layer", "line-color", lineColor);
+        if (map.getLayer(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] + "-layer")) {
+            map.setPaintProperty(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] + "-layer", "line-color", lineColor);
         }
 
-        if (map.getLayer(GEOMETRY_TYPES.POLYGON + "-layer")) {
-            map.setPaintProperty(GEOMETRY_TYPES.POLYGON + "-layer", "fill-color", polygonColor);
+        if (map.getLayer(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON] + "-layer")) {
+            map.setPaintProperty(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON] + "-layer", "fill-color", polygonColor);
         }
 
         markersRef.current.forEach(marker => {
@@ -144,8 +167,10 @@ export default function GISDataViewer() {
 
         const file = fileUploads[TABS.GIS_VIEWER];
         if (!file || !fileDetails[TABS.GIS_VIEWER]) return;
+
         const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
         if (!mapboxToken) return;
+
         mapboxgl.accessToken = mapboxToken;
         mapRef.current = new mapboxgl.Map({
             container: mapContainerRef.current,
@@ -158,7 +183,10 @@ export default function GISDataViewer() {
         map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
         map.on("load", () => {
-            updateDataLayers();
+            const geojsonData = getGeoJsonData();
+            if (geojsonData) {
+                setFilteredData(geojsonData);
+            }
         });
 
         return () => {
@@ -179,9 +207,26 @@ export default function GISDataViewer() {
     useEffect(() => {
         console.log("search text use effect");
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
-            updateDataLayers();
+            updateFilteredDataBySearchText(searchText);
         }
     }, [searchText]);
+
+    useEffect(() => {
+        console.log("filter by geometry types");
+        console.log(filteredGeometryTypes)
+        if (mapRef.current && mapRef.current.isStyleLoaded()) {
+            updateFilteredDataByGeometryType();
+        }
+    }, [filteredGeometryTypes]);
+
+    useEffect(() => {
+        console.log("data is filtered - call the update layers");
+        if (filteredData) {
+            if (mapRef.current && mapRef.current.isStyleLoaded()) {
+                updateDataLayers();
+            }
+        }
+    }, [filteredData]);
 
     useEffect(() => {
         console.log("color filter use effect");
@@ -190,10 +235,12 @@ export default function GISDataViewer() {
         }
     }, [pointColor, lineColor, polygonColor]);
 
-
     return (
         <div className="w-full h-full relative">
-            <MapSearch searchText={searchText} setSearchText={setSearchText} />
+            <MapSearch
+                searchText={searchText} setSearchText={setSearchText}
+                filteredGeometryTypes={filteredGeometryTypes} setFilteredGeometryTypes={setFilteredGeometryTypes}
+            />
             <div ref={mapContainerRef} className="w-full h-full" />
             {selectedFeature && (
                 <FeatureDetailsPopup

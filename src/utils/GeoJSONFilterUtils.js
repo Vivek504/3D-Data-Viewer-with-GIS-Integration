@@ -1,6 +1,7 @@
 import { DATA_TYPES } from '../constants/DataTypes';
+import { GEOMETRY_TYPE_LABELS } from '../constants/Geometry';
 
-export function filterGeoJSONData(geojsonData, searchText) {
+export function filterGeoJSONDataBySearchText(geojsonData, searchText) {
     if (!searchText || searchText.trim() === "") {
         return geojsonData;
     }
@@ -27,6 +28,17 @@ export function filterGeoJSONData(geojsonData, searchText) {
 
     const filteredFeatures = geojsonData.features.filter(feature => {
         return searchInObject(feature.properties);
+    });
+
+    return { ...geojsonData, features: filteredFeatures };
+}
+
+export function filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes) {
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const geometryType = feature.geometry.type;
+        return Object.entries(GEOMETRY_TYPE_LABELS).some(([key, label]) =>
+            filteredGeometryTypes[key] && label === geometryType
+        );
     });
 
     return { ...geojsonData, features: filteredFeatures };
