@@ -1,3 +1,5 @@
+import { DATA_TYPES } from '../constants/DataTypes';
+
 export function filterGeoJSONData(geojsonData, searchText) {
     if (!searchText || searchText.trim() === "") {
         return geojsonData;
@@ -11,11 +13,11 @@ export function filterGeoJSONData(geojsonData, searchText) {
                 return true;
             }
 
-            if (val && val instanceof Object) {
+            if (val && typeof val === DATA_TYPES.OBJECT) {
                 return searchInObject(val);
             }
 
-            if (val && !isNaN(val) && !isNaN(lowerSearch)) {
+            if (val && typeof val === DATA_TYPES.NUMBER && typeof val === DATA_TYPES.NUMBER) {
                 return Number(val) === Number(lowerSearch);
             }
 

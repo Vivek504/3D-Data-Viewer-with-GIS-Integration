@@ -78,7 +78,7 @@ export default function GISDataViewer() {
                     type: type === GEOMETRY_TYPES.LINE_STRING ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
                     source: "gis-data",
                     paint: type === GEOMETRY_TYPES.LINE_STRING
-                        ? { "line-width": 2, "line-color": lineColor }
+                        ? { "line-width": 3, "line-color": lineColor }
                         : { "fill-color": polygonColor, "fill-opacity": 0.5 },
                     filter: ["==", ["geometry-type"], type]
                 });
