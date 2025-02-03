@@ -6,9 +6,12 @@ import { parseXYZFile, parsePCDFile } from '../../utils/PointCloudParserUtils'
 import { parseGeoJSONFile } from '../../utils/GISParserUtils'
 import { useAppContext } from '../../contexts/AppContext'
 import MessageDialog from './MessageDialog'
+import { addLogs } from '../../utils/LogUtils'
+import { LOG_TYPES } from '../../constants/LogTypes'
+import { USER_ACTIONS } from '../../constants/LogsMessages'
 
 export default function FileUpload({ updateFileUploads, updateFileDetails }) {
-    const { activeTab } = useAppContext();
+    const { activeTab, setLogs } = useAppContext();
     const [showMessageDialog, setShowMessageDialog] = useState(false);
 
     // Handles file selection and parsing
@@ -17,10 +20,12 @@ export default function FileUpload({ updateFileUploads, updateFileDetails }) {
             const file = event.target.files[0];
             if (file) {
                 if (file.name.endsWith(FILE_TYPES.XYZ)) {
+                    addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_XYZ_FILE, setLogs);
                     updateFileDetails(await parseXYZFile(file));
                     updateFileUploads(file);
                 }
                 else if (file.name.endsWith(FILE_TYPES.PCD)) {
+                    addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_PCD_FILE, setLogs);
                     updateFileDetails(await parsePCDFile(file));
                     updateFileUploads(file);
                 }
@@ -37,6 +42,7 @@ export default function FileUpload({ updateFileUploads, updateFileDetails }) {
             }
         }
         catch (error) {
+            addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_INVALID_FILE, setLogs);
             setShowMessageDialog(true); // Show error dialog
         }
     };

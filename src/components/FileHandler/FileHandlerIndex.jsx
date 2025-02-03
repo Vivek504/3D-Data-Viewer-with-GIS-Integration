@@ -2,9 +2,12 @@ import React, { useState } from 'react'
 import FileUpload from './FileUpload'
 import FileDetails from './FileDetails'
 import { useAppContext } from '../../contexts/AppContext';
+import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
 
 export default function FileHandlerIndex() {
-    const { activeTab, fileUploads, setFileUploads, fileDetails, setFileDetails } = useAppContext();
+    const { activeTab, fileUploads, setFileUploads, fileDetails, setFileDetails, resetAppContext } = useAppContext();
+
+    const { resetThreeDContext } = useThreeDDataViewerContext();
 
     // Updates the file upload state based on the active tab
     const updateFileUploads = (file) => {
@@ -22,10 +25,10 @@ export default function FileHandlerIndex() {
         }));
     }
 
-    // Resets file uploads and file details on refresh
+    // Reset contexts on refresh
     const onRefresh = () => {
-        updateFileUploads(null);
-        updateFileDetails(null);
+        resetAppContext();
+        resetThreeDContext();
     }
 
     return (

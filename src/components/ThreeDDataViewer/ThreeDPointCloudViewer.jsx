@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import * as THREE from 'three';
 import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader';
@@ -8,9 +8,12 @@ import { TABS } from '../../constants/Tabs';
 import { FILE_TYPES } from '../../constants/FileTypes';
 import { useThreeDDataViewerContext } from '../../contexts/ThreeDDataViewerContext';
 import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
+import { addLogs } from '../../utils/LogUtils';
+import { LOG_TYPES } from '../../constants/LogTypes';
+import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
 
 export default function ThreeDPointCloudViewer() {
-    const { fileUploads } = useAppContext();
+    const { fileUploads, setLogs } = useAppContext();
     const containerRef = useRef(null);
     const {
         pointSize,
@@ -23,6 +26,7 @@ export default function ThreeDPointCloudViewer() {
         backgroundColor
     } = useThreeDDataViewerContext();
 
+    // References to store three.js objects and original data
     const loadedObjectRef = useRef(null);
     const rendererRef = useRef(null);
     const sceneRef = useRef(null);
@@ -30,14 +34,19 @@ export default function ThreeDPointCloudViewer() {
     const originalColorsRef = useRef(null);
     const originalGeometryRef = useRef(null);
 
+    // Log when a 3D object has been loaded and displayed
     useEffect(() => {
-        console.log('component loading');
-    }, []);
+        if (loadedObjectRef) {
+            addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.DISPLAYED_3D_DATA, setLogs);
+        }
+    }, [loadedObjectRef]);
 
     useEffect(() => {
+        // Get the file for the 3D data viewer tab
         const file = fileUploads[TABS.THREED_DATA_VIEWER];
         if (!file) return;
 
+        // Initialize scene, camera and renderer
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(backgroundColor);
         sceneRef.current = scene;
@@ -56,6 +65,7 @@ export default function ThreeDPointCloudViewer() {
         containerRef.current.appendChild(renderer.domElement);
         rendererRef.current = renderer;
 
+        // Set up orbit controls for camera interaction
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
@@ -64,10 +74,12 @@ export default function ThreeDPointCloudViewer() {
         reader.onload = (event) => {
             let loadedObject;
 
+            // Parse PCD files using PCDLoader
             if (file.name.endsWith(FILE_TYPES.PCD)) {
                 const loader = new PCDLoader();
                 loadedObject = loader.parse(event.target.result);
 
+                // Save original colors if available
                 if (loadedObject.material && loadedObject.material.vertexColors) {
                     const colorsAttribute = loadedObject.geometry.getAttribute('color');
                     if (colorsAttribute) {
@@ -75,6 +87,7 @@ export default function ThreeDPointCloudViewer() {
                     }
                 }
             }
+            // Parse XYZ files using XYZLoader
             else if (file.name.endsWith(FILE_TYPES.XYZ)) {
                 const loader = new XYZLoader();
                 const geometry = loader.parse(event.target.result);
@@ -83,6 +96,7 @@ export default function ThreeDPointCloudViewer() {
             }
 
             if (loadedObject) {
+                // Set point size if available and store the original geometry
                 if (loadedObject.material && loadedObject.material.size) {
                     if (!pointSize) {
                         setPointSize(loadedObject.material.size);
@@ -91,6 +105,7 @@ export default function ThreeDPointCloudViewer() {
                 loadedObject.frustumCulled = false;
                 originalGeometryRef.current = loadedObject.geometry.clone();
 
+                // Apply color mapping if enabled
                 if (applyColorMapping) {
                     applyColorMappingOnObject(loadedObject);
                 }
@@ -98,19 +113,23 @@ export default function ThreeDPointCloudViewer() {
                 scene.add(loadedObject);
                 loadedObjectRef.current = loadedObject;
 
+                // Apply point size filter if necessary
                 if (pointSize && loadedObjectRef.current.material && loadedObjectRef.current.material.size != pointSize) {
                     console.log('call while loading');
                     applyPointSizeFilter();
                 }
 
+                // Apply altitude filter if ranges are defined
                 if (altitudeRanges) {
                     applyAltitudeFilter();
                 }
 
+                // Adjust camera to fit the loaded object
                 fitCameraToObject(camera, controls, loadedObject, renderer);
             }
         };
 
+        // Read file as ArrayBuffer for PCD or as text for XYZ files
         if (file.name.endsWith(FILE_TYPES.PCD)) {
             reader.readAsArrayBuffer(file);
         }
@@ -118,6 +137,7 @@ export default function ThreeDPointCloudViewer() {
             reader.readAsText(file);
         }
 
+        // Animation loop for rendering
         const animate = () => {
             requestAnimationFrame(animate);
             controls.update();
@@ -125,6 +145,7 @@ export default function ThreeDPointCloudViewer() {
         };
         animate();
 
+        // Handle window resize
         const handleResize = () => {
             if (containerRef.current) {
                 const width = containerRef.current.clientWidth;
@@ -136,6 +157,7 @@ export default function ThreeDPointCloudViewer() {
         };
         window.addEventListener('resize', handleResize);
 
+        // Adjust camera position and parameters to fit the object
         const fitCameraToObject = (camera, controls, object, renderer, offset = 1.25) => {
             const boundingBox = new THREE.Box3().setFromObject(object);
             const center = boundingBox.getCenter(new THREE.Vector3());
@@ -158,6 +180,7 @@ export default function ThreeDPointCloudViewer() {
             renderer.render(scene, camera);
         };
 
+        // Cleanup function on component unmount or file change
         return () => {
             window.removeEventListener('resize', handleResize);
 
@@ -165,6 +188,7 @@ export default function ThreeDPointCloudViewer() {
                 renderer.dispose();
             }
 
+            // Dispose all geometries and materials in the scene
             if (scene) {
                 scene.traverse((object) => {
                     if (object.geometry) object.geometry.dispose();
@@ -187,22 +211,22 @@ export default function ThreeDPointCloudViewer() {
         };
     }, [fileUploads[TABS.THREED_DATA_VIEWER]]);
 
-    const applyPointSizeFilter = useCallback(() => {
-        console.log('applying point size filter: ' + pointSize)
+    // Update point size of the loaded object
+    const applyPointSizeFilter = () => {
+        addLogs(LOG_TYPES.USER, USER_ACTIONS.ADJUSTED_POINT_SIZE, setLogs);
         if (loadedObjectRef.current && pointSize) {
             if (loadedObjectRef.current.material && loadedObjectRef.current.material.size != pointSize) {
                 loadedObjectRef.current.material.size = pointSize;
                 loadedObjectRef.current.material.needsUpdate = true;
-                console.log('applied filter');
 
                 if (rendererRef.current && sceneRef.current && cameraRef.current) {
                     rendererRef.current.render(sceneRef.current, cameraRef.current);
-                    console.log('updated render');
                 }
             }
         }
-    }, [pointSize]);
+    };
 
+    // Apply color mapping based on altitude to the object's geometry
     const applyColorMappingOnObject = (object) => {
         if (!object.geometry || !object.geometry.attributes.position) return;
 
@@ -210,6 +234,7 @@ export default function ThreeDPointCloudViewer() {
         const colors = new Float32Array((positions.length / 3) * 3);
         const color = new THREE.Color();
 
+        // Loop through each point and assign color based on altitude
         for (let i = 0; i < positions.length; i += 3) {
             const altitude = positions[i + 1];
             let assignedColor = POINT_CLOUD_COLORS.DEFAULT;
@@ -237,6 +262,7 @@ export default function ThreeDPointCloudViewer() {
         }
     };
 
+    // Filter the geometry based on altitude ranges
     const applyAltitudeFilter = () => {
         if (!loadedObjectRef.current || !originalGeometryRef.current) return;
 
@@ -246,6 +272,7 @@ export default function ThreeDPointCloudViewer() {
 
         const indices = [];
 
+        // Identify points within the specified altitude ranges
         for (let i = 0; i < totalPoints; i++) {
             const y = positions[i * 3 + 1];
             for (const range of altitudeRanges) {
@@ -267,6 +294,7 @@ export default function ThreeDPointCloudViewer() {
             filteredColors = new Float32Array(indices.length * 3);
         }
 
+        // Build new geometry with filtered points
         for (let i = 0; i < indices.length; i++) {
             const index = indices[i];
             filteredPositions.set(
@@ -296,6 +324,7 @@ export default function ThreeDPointCloudViewer() {
             filteredGeometry.setAttribute('color', new THREE.BufferAttribute(filteredColors, 3));
         }
 
+        // Replace geometry of the loaded object
         loadedObjectRef.current.geometry.dispose();
         loadedObjectRef.current.geometry = filteredGeometry;
 
@@ -308,19 +337,21 @@ export default function ThreeDPointCloudViewer() {
         }
     };
 
+    // Update point size when the pointSize state changes
     useEffect(() => {
         if (loadedObjectRef.current && pointSize && loadedObjectRef.current.material && loadedObjectRef.current.material.size != pointSize) {
-            console.log('call while use effect')
             applyPointSizeFilter();
         }
     }, [pointSize, applyPointSizeFilter]);
 
+    // Update color mapping when toggled or when color ranges change
     useEffect(() => {
         if (loadedObjectRef.current) {
             if (applyColorMapping) {
                 applyColorMappingOnObject(loadedObjectRef.current);
             }
             else {
+                // Reset to original colors if available, otherwise use default
                 if (loadedObjectRef.current.material.vertexColors) {
                     if (originalColorsRef.current) {
                         const colors = new Float32Array(originalColorsRef.current.length);
@@ -346,6 +377,7 @@ export default function ThreeDPointCloudViewer() {
         }
     }, [applyColorMapping, colorRanges]);
 
+    // Reset color mapping if the reset flag is enabled
     useEffect(() => {
         if (resetColorMapping) {
             if (loadedObjectRef.current) {
@@ -372,10 +404,12 @@ export default function ThreeDPointCloudViewer() {
         }
     }, [resetColorMapping, setResetColorMapping]);
 
+    // Re-apply altitude filter when altitude ranges change
     useEffect(() => {
         applyAltitudeFilter();
     }, [altitudeRanges]);
 
+    // Update scene background color when it changes
     useEffect(() => {
         if (sceneRef.current) {
             sceneRef.current.background = new THREE.Color(backgroundColor);
