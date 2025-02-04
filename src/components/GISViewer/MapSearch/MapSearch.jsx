@@ -96,7 +96,7 @@ export default function MapSearch({ searchText, setSearchText, filteredGeometryT
                             value={tempSearchText}
                             onChange={(e) => setTempSearchText(e.target.value)}
                             className="flex-1 min-w-0 px-2 py-1 outline-none bg-transparent text-gray-700"
-                            placeholder="Search GIS data..."
+                            placeholder="Search..."
                         />
 
                         <div className="flex-shrink-0 flex items-center">
