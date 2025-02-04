@@ -17,8 +17,8 @@ export function filterGeoJSONDataBySearchText(geojsonData, searchText) {
             if (val && typeof val === DATA_TYPES.OBJECT) {
                 return searchInObject(val);
             }
-
-            if (val && typeof val === DATA_TYPES.NUMBER && typeof val === DATA_TYPES.NUMBER) {
+            
+            if (typeof val === DATA_TYPES.NUMBER && !isNaN(lowerSearch)) {
                 return Number(val) === Number(lowerSearch);
             }
 
