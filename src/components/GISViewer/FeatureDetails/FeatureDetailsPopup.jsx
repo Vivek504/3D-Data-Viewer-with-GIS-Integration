@@ -6,6 +6,7 @@ import { DATA_TYPES } from '../../../constants/DataTypes';
 export default function FeatureDetailsPopup({ feature, onClose }) {
     if (!feature) return null;
 
+    // Format coordinates to a readable string
     const formatCoordinates = (coordinates) => {
         if (typeof coordinates[0] === DATA_TYPES.NUMBER) {
             return `[${coordinates[0].toFixed(4)}, ${coordinates[1].toFixed(4)}]`;
@@ -41,12 +42,14 @@ export default function FeatureDetailsPopup({ feature, onClose }) {
                     </button>
                 </div>
                 <div className="p-4 space-y-4">
+                    {/* Display coordinates */}
                     <div>
                         <label className="text-sm font-medium text-gray-500">Coordinates</label>
                         <p className="text-gray-900 font-mono text-sm mt-1">
                             {formatCoordinates(feature.geometry.coordinates)}
                         </p>
                     </div>
+                    {/* Display properties */}
                     <div>
                         <label className="text-sm font-medium text-gray-500">Properties</label>
                         <div className="bg-gray-50 rounded-md p-3 mt-1">

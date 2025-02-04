@@ -1,3 +1,4 @@
+// Constant for map styles
 export const MAP_STYLES = Object.freeze({
     STREETS: 0,
     OUTDOORS: 1,
@@ -9,6 +10,7 @@ export const MAP_STYLES = Object.freeze({
     NAVIGATION_NIGHT: 7
 });
 
+// Mapping of map styles to dropdown names
 export const MAP_STYLE_DROPDOWN_NAMES = Object.freeze({
     [MAP_STYLES.STREETS]: "Streets",
     [MAP_STYLES.OUTDOORS]: "Outdoors",
@@ -20,6 +22,7 @@ export const MAP_STYLE_DROPDOWN_NAMES = Object.freeze({
     [MAP_STYLES.NAVIGATION_NIGHT]: "Navigation Night"
 });
 
+// Mapping of map styles to corresponding URLs
 export const MAP_STYLE_URLS = Object.freeze({
     [MAP_STYLES.STREETS]: "mapbox://styles/mapbox/streets-v12",
     [MAP_STYLES.OUTDOORS]: "mapbox://styles/mapbox/outdoors-v12",
