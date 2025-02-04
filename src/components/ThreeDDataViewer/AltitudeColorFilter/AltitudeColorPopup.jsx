@@ -3,7 +3,7 @@ import { Plus, X, Trash2 } from "lucide-react";
 import { POINT_CLOUD_COLORS } from "../../../constants/ThreeDViewerColors";
 import { getStepSizeForRange } from "../../../utils/MathUtils";
 
-export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, setApplyColorMapping, onResetColorMapping }) {
+export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, onResetColorMapping }) {
     const stepSize = getStepSizeForRange(min, max);
     const [segments, setSegments] = useState([]);
 

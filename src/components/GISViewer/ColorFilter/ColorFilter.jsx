@@ -12,12 +12,14 @@ export default function ColorFilter() {
 
     const { pointColor, setPointColor, lineColor, setLineColor, polygonColor, setPolygonColor } = useGISViewerContext();
 
+    // Function to handle logging user action for applying geometry color filter
     const handleLog = () => {
         addLogs(LOG_TYPES.USER, USER_ACTIONS.APPLIED_GEOMETRY_COLOR_FILTER, setLogs);
     }
 
     return (
         <div className="space-y-4">
+            {/* Color pickers for point, line, and polygon colors */}
             <ColorPicker label="Point Color" color={pointColor} setColor={setPointColor} defaultColor={GEOMETRY_TYPE_COLOR.POINT.DEFAULT} handleLog={handleLog} />
             <ColorPicker label="Line Color" color={lineColor} setColor={setLineColor} defaultColor={GEOMETRY_TYPE_COLOR.LINE.DEFAULT} handleLog={handleLog} />
             <ColorPicker label="Polygon Color" color={polygonColor} setColor={setPolygonColor} defaultColor={GEOMETRY_TYPE_COLOR.POLYGON.DEFAULT} handleLog={handleLog} />

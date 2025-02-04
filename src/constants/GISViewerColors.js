@@ -1,3 +1,4 @@
+// Constant for geometry type colors
 export const GEOMETRY_TYPE_COLOR = Object.freeze({
     POINT: Object.freeze({
         DEFAULT: "#E63946"

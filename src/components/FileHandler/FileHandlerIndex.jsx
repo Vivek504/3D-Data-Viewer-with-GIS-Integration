@@ -7,7 +7,7 @@ import { TABS } from '../../constants/Tabs';
 import { useGISViewerContext } from '../../contexts/GISViewerContext';
 
 export default function FileHandlerIndex() {
-    const { activeTab, fileUploads, setFileUploads, fileDetails, setFileDetails, resetAppContext } = useAppContext();
+    const { activeTab, fileUploads, setFileUploads, fileDetails, setFileDetails, resetAppContext, setLogs } = useAppContext();
 
     const { resetThreeDContext } = useThreeDDataViewerContext();
 
@@ -50,7 +50,7 @@ export default function FileHandlerIndex() {
                     </div>
                 </div>
                 :
-                <FileUpload updateFileUploads={updateFileUploads} updateFileDetails={updateFileDetails} />
+                <FileUpload updateFileUploads={updateFileUploads} updateFileDetails={updateFileDetails} activeTab={activeTab} setLogs={setLogs} />
             }
         </div>
     )

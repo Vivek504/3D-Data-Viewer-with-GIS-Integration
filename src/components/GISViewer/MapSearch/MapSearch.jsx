@@ -3,14 +3,19 @@ import { Search, X, Check, ChevronDown } from 'lucide-react';
 import { GEOMETRY_TYPES, GEOMETRY_TYPE_LABELS } from '../../../constants/Geometry';
 
 export default function MapSearch({ searchText, setSearchText, filteredGeometryTypes, setFilteredGeometryTypes }) {
+    // State to manage the expanded search box
     const [isExpanded, setIsExpanded] = useState(false);
+    // State to manage the dropdown visibility
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    // Temporary search text state
     const [tempSearchText, setTempSearchText] = useState(searchText || "");
 
+    // Sync tempSearchText with the incoming searchText prop
     useEffect(() => {
         setTempSearchText(searchText || "");
     }, [searchText]);
 
+    // Close dropdown when clicking outside the search container
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!event.target.closest('.search-container')) {
@@ -22,6 +27,7 @@ export default function MapSearch({ searchText, setSearchText, filteredGeometryT
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
+    // Toggle the expanded state of the search box
     const handleSearchClick = () => {
         setIsExpanded(!isExpanded);
         if (!isExpanded) {
@@ -31,21 +37,25 @@ export default function MapSearch({ searchText, setSearchText, filteredGeometryT
         }
     };
 
+    // Clear the search input and reset states
     const handleClear = () => {
         setTempSearchText('');
         setSearchText('');
         setIsExpanded(false);
     };
 
+    // Confirm search and update the parent component state
     const handleConfirmSearch = () => {
         setSearchText(tempSearchText);
     };
 
+    // Toggle the dropdown visibility
     const toggleDropdown = (e) => {
         e.stopPropagation();
         setIsDropdownOpen(!isDropdownOpen);
     };
 
+    // Toggle the visibility of a specific geometry type
     const handleTypeToggle = (typeValue) => {
         setFilteredGeometryTypes(prev => ({
             ...prev,
@@ -53,6 +63,7 @@ export default function MapSearch({ searchText, setSearchText, filteredGeometryT
         }));
     };
 
+    // Select or deselect all geometry types
     const handleSelectAll = () => {
         const areAllSelected = Object.values(filteredGeometryTypes).every(v => v);
         const newValue = !areAllSelected;
@@ -63,6 +74,7 @@ export default function MapSearch({ searchText, setSearchText, filteredGeometryT
         setFilteredGeometryTypes(updatedTypes);
     };
 
+    // Check if all geometry types are selected
     const areAllSelected = Object.values(filteredGeometryTypes).every(v => v);
 
     return (
