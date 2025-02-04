@@ -4,15 +4,13 @@ import { FILE_TYPES, FILE_TYPES_BY_TAB } from '../../constants/FileTypes'
 import { FILE_DROP_MESSAGES } from '../../constants/FileDropMessages'
 import { parseXYZFile, parsePCDFile } from '../../utils/PointCloudParserUtils'
 import { parseGeoJSONFile } from '../../utils/GISParserUtils'
-import { useAppContext } from '../../contexts/AppContext'
-import MessageDialog from '../shared/MessageDialog'
+import ErrorMessageDialog from '../shared/ErrorMessageDialog'
 import { addLogs } from '../../utils/LogUtils'
 import { LOG_TYPES } from '../../constants/LogTypes'
 import { USER_ACTIONS } from '../../constants/LogsMessages'
 
-export default function FileUpload({ updateFileUploads, updateFileDetails }) {
-    const { activeTab, setLogs } = useAppContext();
-    const [showMessageDialog, setShowMessageDialog] = useState(false);
+export default function FileUpload({ activeTab, updateFileUploads, updateFileDetails, setLogs }) {
+    const [showErrorMessageDialog, setShowErrorMessageDialog] = useState(false);
 
     // Handles file selection and parsing
     const onFileUpload = async (event) => {
@@ -43,13 +41,13 @@ export default function FileUpload({ updateFileUploads, updateFileDetails }) {
         }
         catch (error) {
             addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_INVALID_FILE, setLogs);
-            setShowMessageDialog(true); // Show error dialog
+            setShowErrorMessageDialog(true); // Show error dialog
         }
     };
 
     // Closes error message dialog
     const handleCloseMessageDialog = () => {
-        setShowMessageDialog(false);
+        setShowErrorMessageDialog(false);
     };
 
     return (
@@ -75,8 +73,8 @@ export default function FileUpload({ updateFileUploads, updateFileDetails }) {
             </label>
 
             {/* Error message popup if invalid file is uploaded */}
-            {showMessageDialog && (
-                <MessageDialog
+            {showErrorMessageDialog && (
+                <ErrorMessageDialog
                     message="Please upload a valid file."
                     onClose={handleCloseMessageDialog}
                 />

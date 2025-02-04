@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import React from 'react';
 
-export default function MessageDialog({ message, onClose }) {
+export default function ErrorMessageDialog({ message, onClose }) {
     return (
         // Overlay background with blur effect
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">

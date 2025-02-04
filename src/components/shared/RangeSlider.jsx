@@ -11,7 +11,7 @@ export default function RangeSlider({ min, max, step, value, onChange }) {
                 step={step}
                 value={value}
                 onChange={onChange}
-                className="w-full block bg-gray-300 rounded-lg"
+                className="w-full block bg-blue-200 rounded-lg appearance-none cursor-pointer h-1.5"
             />
         </div>
     );

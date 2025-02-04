@@ -75,7 +75,6 @@ export default function AltitudeColorPopupIndex() {
                     max={parseFloat(maxAltitude.toFixed(getDecimalPrecisionLength(maxAltitude)))}
                     colorRanges={colorRanges}
                     setColorRanges={setColorRanges}
-                    setApplyColorMapping={setApplyColorMapping}
                     onClose={handleClosePopup}
                     onResetColorMapping={onResetColorMapping}
                 />

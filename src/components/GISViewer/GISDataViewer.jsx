@@ -9,7 +9,7 @@ import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
 import MapSearch from './MapSearch/MapSearch';
 import { filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText } from '../../utils/GeoJSONFilterUtils';
-import MessageDialog from '../shared/MessageDialog';
+import ErrorMessageDialog from '../shared/ErrorMessageDialog';
 import { FILE_MESSAGES, GIS_DATA_VIEWER_MESSAGES } from '../../constants/ErrorMessages';
 import { addLogs } from '../../utils/LogUtils';
 import { LOG_TYPES } from '../../constants/LogTypes';
@@ -28,7 +28,7 @@ export default function GISDataViewer() {
         pointColor, lineColor, polygonColor,
         filteredData, setFilteredData
     } = useGISViewerContext();
-    const [showMessageDialog, setShowMessageDialog] = useState(false);
+    const [showErrorMessageDialog, setShowErrorMessageDialog] = useState(false);
     const [errorMessage, setErroMessage] = useState();
 
     const addPointMarkers = (geojsonData) => {
@@ -103,7 +103,7 @@ export default function GISDataViewer() {
             }
 
             if (filteredData.features.length === 0) {
-                setShowMessageDialog(true);
+                setShowErrorMessageDialog(true);
                 setErroMessage(GIS_DATA_VIEWER_MESSAGES.NO_DATA_FOUND);
             }
 
@@ -160,7 +160,7 @@ export default function GISDataViewer() {
             }
         }
         catch (error) {
-            setShowMessageDialog(true);
+            setShowErrorMessageDialog(true);
             setErroMessage(FILE_MESSAGES.INVALID_FILE);
         }
     };
@@ -266,10 +266,10 @@ export default function GISDataViewer() {
                 />
             )}
             {/* Error message popup if invalid file is uploaded */}
-            {showMessageDialog && (
-                <MessageDialog
+            {showErrorMessageDialog && (
+                <ErrorMessageDialog
                     message={errorMessage}
-                    onClose={() => setShowMessageDialog(false)}
+                    onClose={() => setShowErrorMessageDialog(false)}
                 />
             )}
         </div>
