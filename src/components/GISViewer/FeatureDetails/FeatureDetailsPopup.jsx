@@ -27,8 +27,8 @@ export default function FeatureDetailsPopup({ feature, onClose }) {
     };
 
     return (
-        <div className="absolute bottom-4 right-4 z-50 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg p-2">
-            <div className="shadow-lg bg-white rounded-lg overflow-hidden border border-gray-200">
+        <div className="absolute bottom-4 right-4 z-50 w-1/2 h-1/2 p-2">
+            <div className="h-full shadow-lg bg-white rounded-lg overflow-auto border border-gray-200">
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     <div className="flex items-center space-x-2">
                         <MapPin className="text-blue-500" size={24} />
@@ -41,7 +41,7 @@ export default function FeatureDetailsPopup({ feature, onClose }) {
                         <X size={20} />
                     </button>
                 </div>
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-4 overflow-auto h-full">
                     {/* Display coordinates */}
                     <div>
                         <label className="text-sm font-medium text-gray-500">Coordinates</label>
@@ -55,7 +55,7 @@ export default function FeatureDetailsPopup({ feature, onClose }) {
                         <div className="bg-gray-50 rounded-md p-3 mt-1">
                             {Object.entries(feature.properties).map(([key, value]) => (
                                 <div key={key} className="py-1">
-                                    <label className="text-xs font-medium text-gray-500">{key}</label>
+                                    <label className="text-xs font-medium text-gray-500 break-words whitespace-pre-wrap">{key}</label>
                                     <div className="mt-1">
                                         <RenderPropertyValue value={value} />
                                     </div>
