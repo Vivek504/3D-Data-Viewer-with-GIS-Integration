@@ -16,7 +16,7 @@ import { LOG_TYPES } from '../../constants/LogTypes';
 import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
 
 export default function GISDataViewer() {
-    const { fileUploads, fileDetails, setLogs } = useAppContext();
+    const { activeTab, fileUploads, fileDetails, setLogs } = useAppContext();
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markersRef = useRef([]);
@@ -41,24 +41,30 @@ export default function GISDataViewer() {
 
         geojsonData.features.forEach(feature => {
             if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]) {
-                // Create a new marker element
-                const el = document.createElement('div');
-                el.className = 'marker';
-                el.style.width = '25px';
-                el.style.height = '35px';
-                el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="${encodeURIComponent(pointColor)}"/></svg>')`;
-                el.style.backgroundSize = '100%';
-                el.style.cursor = 'pointer';
-
-                // Event listener for when the marker is clicked
-                el.addEventListener('click', () => {
-                    setSelectedFeature(feature);
-                });
-
-                // Create the marker on the map
-                const marker = new mapboxgl.Marker(el)
+                // Create the marker on the map using default Mapbox marker
+                const marker = new mapboxgl.Marker({ color: pointColor })
                     .setLngLat(feature.geometry.coordinates)
                     .addTo(map);
+
+                // Get the marker's HTML element
+                const markerElement = marker.getElement();
+
+                // Ensure marker is interactable
+                markerElement.style.cursor = "pointer";
+
+                // Add hover effect: Change cursor on hover
+                markerElement.addEventListener("mouseenter", () => {
+                    map.getCanvas().style.cursor = "pointer";
+                });
+
+                markerElement.addEventListener("mouseleave", () => {
+                    map.getCanvas().style.cursor = "";
+                });
+
+                // Event listener for when the marker is clicked
+                markerElement.addEventListener("click", () => {
+                    setSelectedFeature(feature);
+                });
 
                 markersRef.current.push(marker);
             }
@@ -132,6 +138,15 @@ export default function GISDataViewer() {
                             ? { "line-width": 3, "line-color": lineColor }
                             : { "fill-color": polygonColor, "fill-opacity": 0.5 },
                         filter: ["==", ["geometry-type"], type]
+                    });
+
+                    // Add hover effect to change cursor
+                    map.on("mouseenter", layerId, () => {
+                        map.getCanvas().style.cursor = "pointer";
+                    });
+
+                    map.on("mouseleave", layerId, () => {
+                        map.getCanvas().style.cursor = "";
                     });
 
                     // Event listener for layer clicks
@@ -227,11 +242,12 @@ export default function GISDataViewer() {
         });
 
         return () => {
+            setFilteredData();
             markersRef.current.forEach(marker => marker.remove());
             markersRef.current = [];
             map.remove();
         };
-    }, [fileUploads, fileDetails]);
+    }, [activeTab, fileUploads, fileDetails]);
 
     // Update map style when mapStyle changes
     useEffect(() => {

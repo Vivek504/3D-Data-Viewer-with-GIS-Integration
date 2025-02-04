@@ -8,6 +8,7 @@ import ErrorMessageDialog from '../shared/ErrorMessageDialog'
 import { addLogs } from '../../utils/LogUtils'
 import { LOG_TYPES } from '../../constants/LogTypes'
 import { USER_ACTIONS } from '../../constants/LogsMessages'
+import { TABS } from '../../constants/Tabs'
 
 export default function FileUpload({ activeTab, updateFileUploads, updateFileDetails, setLogs }) {
     const [showErrorMessageDialog, setShowErrorMessageDialog] = useState(false);
@@ -17,22 +18,29 @@ export default function FileUpload({ activeTab, updateFileUploads, updateFileDet
         try {
             const file = event.target.files[0];
             if (file) {
-                if (file.name.endsWith(FILE_TYPES.XYZ)) {
-                    addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_XYZ_FILE, setLogs);
-                    updateFileDetails(await parseXYZFile(file));
-                    updateFileUploads(file);
-                }
-                else if (file.name.endsWith(FILE_TYPES.PCD)) {
-                    addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_PCD_FILE, setLogs);
-                    updateFileDetails(await parsePCDFile(file));
-                    updateFileUploads(file);
-                }
-                else if (file.name.endsWith(FILE_TYPES.GEOJSON) || file.name.endsWith(FILE_TYPES.JSON)) {
-                    updateFileDetails(await parseGeoJSONFile(file));
-                    updateFileUploads(file);
+                if (activeTab === TABS.THREED_DATA_VIEWER) {
+                    if (file.name.endsWith(FILE_TYPES.XYZ)) {
+                        addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_XYZ_FILE, setLogs);
+                        updateFileDetails(await parseXYZFile(file));
+                        updateFileUploads(file);
+                    }
+                    else if (file.name.endsWith(FILE_TYPES.PCD)) {
+                        addLogs(LOG_TYPES.USER, USER_ACTIONS.UPLOADED_PCD_FILE, setLogs);
+                        updateFileDetails(await parsePCDFile(file));
+                        updateFileUploads(file);
+                    }
+                    else {
+                        throw new Error("Invalid file"); // Trigger error for unsupported file
+                    }
                 }
                 else {
-                    throw new Error("Invalid file"); // Trigger error for unsupported file
+                    if (file.name.endsWith(FILE_TYPES.GEOJSON) || file.name.endsWith(FILE_TYPES.JSON)) {
+                        updateFileDetails(await parseGeoJSONFile(file));
+                        updateFileUploads(file);
+                    }
+                    else {
+                        throw new Error("Invalid file"); // Trigger error for unsupported file
+                    }
                 }
             }
             else {
