@@ -21,6 +21,19 @@ export const GISViewerContextProvider = ({ children }) => {
 
     const [filteredData, setFilteredData] = useState();
 
+    const resetGISContext = () => {
+        setMapStyle(MAP_STYLES.STREETS);
+
+        setSearchText();
+        setFilteredGeometryTypes(Object.fromEntries(Object.values(GEOMETRY_TYPES).map(type => [type, true])));
+
+        setPointColor(GEOMETRY_TYPE_COLOR.POINT.DEFAULT);
+        setLineColor(GEOMETRY_TYPE_COLOR.LINE.DEFAULT);
+        setPolygonColor(GEOMETRY_TYPE_COLOR.POLYGON.DEFAULT);
+
+        setFilteredData();
+    }
+
     return (
         <GISViewerContext.Provider value={{
             mapStyle, setMapStyle,
@@ -29,7 +42,8 @@ export const GISViewerContextProvider = ({ children }) => {
             pointColor, setPointColor,
             lineColor, setLineColor,
             polygonColor, setPolygonColor,
-            filteredData, setFilteredData
+            filteredData, setFilteredData,
+            resetGISContext
         }}>
             {children}
         </GISViewerContext.Provider>

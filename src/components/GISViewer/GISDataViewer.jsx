@@ -11,9 +11,12 @@ import MapSearch from './MapSearch/MapSearch';
 import { filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText } from '../../utils/GeoJSONFilterUtils';
 import MessageDialog from '../shared/MessageDialog';
 import { FILE_MESSAGES, GIS_DATA_VIEWER_MESSAGES } from '../../constants/ErrorMessages';
+import { addLogs } from '../../utils/LogUtils';
+import { LOG_TYPES } from '../../constants/LogTypes';
+import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
 
 export default function GISDataViewer() {
-    const { fileUploads, fileDetails } = useAppContext();
+    const { fileUploads, fileDetails, setLogs } = useAppContext();
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markersRef = useRef([]);
@@ -78,7 +81,7 @@ export default function GISDataViewer() {
     const updateFilteredDataByGeometryType = () => {
         const geojsonData = getGeoJsonData();
         if (geojsonData) {
-            setFilteredData(filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes))
+            setFilteredData(filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes));
         }
     }
 
@@ -202,6 +205,7 @@ export default function GISDataViewer() {
             const geojsonData = getGeoJsonData();
             if (geojsonData) {
                 setFilteredData(geojsonData);
+                addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.DISPLAYED_MAP, setLogs);
             }
         });
 
@@ -216,18 +220,21 @@ export default function GISDataViewer() {
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             mapRef.current.setStyle(MAP_STYLE_URLS[mapStyle]);
             mapRef.current.once("styledata", updateDataLayers);
+            addLogs(LOG_TYPES.USER, USER_ACTIONS.APPLIED_MAP_STYLE_FILTER, setLogs);
         }
     }, [mapStyle]);
 
     useEffect(() => {
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             updateFilteredDataBySearchText(searchText);
+            addLogs(LOG_TYPES.USER, USER_ACTIONS.SEARCHED_GIS_DATA, setLogs);
         }
     }, [searchText]);
 
     useEffect(() => {
         if (mapRef.current && mapRef.current.isStyleLoaded()) {
             updateFilteredDataByGeometryType();
+            addLogs(LOG_TYPES.USER, USER_ACTIONS.APPLIED_GEOMETRY_TYPE_FILTER, setLogs);
         }
     }, [filteredGeometryTypes]);
 
