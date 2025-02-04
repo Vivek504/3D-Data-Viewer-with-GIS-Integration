@@ -3,7 +3,7 @@ import React from 'react';
 export default function ConfirmDialog({ message, onConfirm, onCancel }) {
     return (
         // Overlay with blur effect
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
             {/* Modal container */}
             <div className="bg-white rounded-md p-6 w-96 shadow-md">
                 {/* Dialog message */}
