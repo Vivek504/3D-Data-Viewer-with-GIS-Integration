@@ -11,11 +11,11 @@ export default function LayoutIndex() {
             <ThreeDDataViewerContextProvider>
                 <GISViewerContextProvider>
                     {/* Left Section: Left Panel (4/5 height) & Bottom Panel (1/5 height) */}
-                    <div className="flex flex-col w-1/4 h-full">
-                        <div className="h-4/5">
+                    <div className="flex flex-col w-1/4 h-full space-y-4">
+                        <div className="flex-1 overflow-hidden">
                             <LeftPanelIndex />
                         </div>
-                        <div className="h-1/5 mt-4">
+                        <div className="flex-none">
                             <BottomPanelIndex />
                         </div>
                     </div>

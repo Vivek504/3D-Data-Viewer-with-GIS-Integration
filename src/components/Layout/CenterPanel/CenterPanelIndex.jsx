@@ -48,8 +48,8 @@ export default function CenterPanelIndex() {
             </div>
 
             {/* Content area where the appropriate viewer is displayed */}
-            <div className="flex-1 bg-gray-50 p-4">
-                <div className="h-full text-gray-400 bg-white rounded-lg shadow-sm border-gray flex items-center justify-center">
+            <div className="flex-1 bg-gray-50">
+                <div className="h-full text-gray-400 bg-white shadow-sm border-gray flex items-center justify-center">
                     {!fileUploads[activeTab] ? (
                         // Display message when no file is uploaded
                         <div className="text-gray-400">
