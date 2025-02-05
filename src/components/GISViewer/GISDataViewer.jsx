@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useAppContext } from '../../contexts/AppContext';
 import { TABS } from '../../constants/Tabs';
@@ -8,12 +8,13 @@ import FeatureDetailsPopup from './FeatureDetails/FeatureDetailsPopup';
 import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
 import MapSearch from './MapSearch/MapSearch';
-import { filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText } from '../../utils/GeoJSONFilterUtils';
+import { filterGeoJSONByDate, filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText, getMinMaxDate } from '../../utils/GeoJSONFilterUtils';
 import ErrorMessageDialog from '../shared/ErrorMessageDialog';
 import { FILE_MESSAGES, GIS_DATA_VIEWER_MESSAGES } from '../../constants/ErrorMessages';
 import { addLogs } from '../../utils/LogUtils';
 import { LOG_TYPES } from '../../constants/LogTypes';
 import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
+import TimeSeriesControl from './TimeSeriesAnimation/TimeSeriesControl';
 
 export default function GISDataViewer() {
     const { activeTab, fileUploads, fileDetails, setLogs } = useAppContext();
@@ -30,6 +31,11 @@ export default function GISDataViewer() {
     } = useGISViewerContext();
     const [showErrorMessageDialog, setShowErrorMessageDialog] = useState(false);
     const [errorMessage, setErroMessage] = useState();
+
+    const [minDate, setMinDate] = useState();
+    const [maxDate, setMaxDate] = useState();
+    const [selectedDate, setSelectedDate] = useState();
+    const [isTimeBoxVisible, setIsTimeBoxVisible] = useState(false);
 
     // Function to add point markers on the map
     const addPointMarkers = (geojsonData) => {
@@ -150,6 +156,14 @@ export default function GISDataViewer() {
         }
     }
 
+    // Function to update filtered data by date
+    const updatedFilteredDataByDate = () => {
+        const geojsonData = getGeoJsonData();
+        if (geojsonData && selectedDate) {
+            setFilteredData(filterGeoJSONByDate(geojsonData, selectedDate));
+        }
+    }
+
     // Function to update the data layers on the map
     const updateDataLayers = () => {
         try {
@@ -258,6 +272,12 @@ export default function GISDataViewer() {
             const geojsonData = getGeoJsonData();
             if (geojsonData) {
                 setFilteredData(geojsonData);
+                const minMaxDate = getMinMaxDate(geojsonData);
+                if (minMaxDate && minMaxDate.minDate && minMaxDate.minDate) {
+                    setMinDate(minMaxDate.minDate);
+                    setMaxDate(minMaxDate.maxDate);
+                    setSelectedDate(minMaxDate.minDate);
+                }
                 addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.DISPLAYED_MAP, setLogs);
             }
         });
@@ -295,6 +315,14 @@ export default function GISDataViewer() {
         }
     }, [filteredGeometryTypes]);
 
+    // Update selected date if the time series animation is enabled
+    useEffect(() => {
+        if (isTimeBoxVisible && selectedDate && mapRef.current && mapRef.current.isStyleLoaded()) {
+            updatedFilteredDataByDate();
+            addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.APPLIED_FILTER_BY_DATE, setLogs);
+        }
+    }, [isTimeBoxVisible, selectedDate]);
+
     // Update map layers when filtered data changes
     useEffect(() => {
         if (filteredData) {
@@ -311,6 +339,28 @@ export default function GISDataViewer() {
         }
     }, [pointColor, lineColor, polygonColor]);
 
+    // Function to handle time series icon click
+    const handleTimeSeriesIconClick = () => {
+        // Function to check if a date is valid
+        const isValidDate = (date) => {
+            return date && !isNaN(new Date(date).getTime());
+        };
+
+        // Check if both dates are valid
+        if (!isValidDate(minDate) || !isValidDate(maxDate)) {
+            setShowErrorMessageDialog(true);
+            setErroMessage(GIS_DATA_VIEWER_MESSAGES.TIMESTAMP_FORMAT_REQUIRED);
+            return;
+        }
+
+        if (isTimeBoxVisible) {
+            const geojsonData = getGeoJsonData();
+            setFilteredData(geojsonData);
+        }
+
+        setIsTimeBoxVisible(!isTimeBoxVisible);
+    };
+
     return (
         <div className="w-full h-full relative">
             <MapSearch
@@ -319,6 +369,19 @@ export default function GISDataViewer() {
             />
 
             <div ref={mapContainerRef} className="w-full h-full" />
+
+            {minDate && maxDate && selectedDate && (
+                // use Time Series Control here
+                <TimeSeriesControl
+                    minDate={minDate}
+                    maxDate={maxDate}
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
+                    isTimeBoxVisible={isTimeBoxVisible}
+                    handleIconClick={handleTimeSeriesIconClick}
+                    setLogs={setLogs}
+                />
+            )}
 
             {selectedFeature && (
                 <FeatureDetailsPopup
