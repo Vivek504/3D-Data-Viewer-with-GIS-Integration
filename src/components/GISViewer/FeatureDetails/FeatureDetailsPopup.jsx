@@ -2,6 +2,7 @@ import React from 'react';
 import { X, MapPin } from 'lucide-react';
 import RenderPropertyValue from './RenderPropertyValue';
 import { DATA_TYPES } from '../../../constants/DataTypes';
+import { GIS_SETTINGS } from '../../../constants/GISSettings';
 
 export default function FeatureDetailsPopup({ feature, onClose }) {
     if (!feature) return null;
@@ -9,7 +10,7 @@ export default function FeatureDetailsPopup({ feature, onClose }) {
     // Format coordinates to a readable string
     const formatCoordinates = (coordinates) => {
         if (typeof coordinates[0] === DATA_TYPES.NUMBER) {
-            return `[${coordinates[0].toFixed(4)}, ${coordinates[1].toFixed(4)}]`;
+            return `[${coordinates[0].toFixed(GIS_SETTINGS.COORDINATES.DECIMAL_POINTS)}, ${coordinates[1].toFixed(GIS_SETTINGS.COORDINATES.DECIMAL_POINTS)}]`;
         }
 
         if (Array.isArray(coordinates[0])) {
@@ -17,7 +18,7 @@ export default function FeatureDetailsPopup({ feature, onClose }) {
                 .flat(Infinity)
                 .reduce((acc, _, i, arr) => {
                     if (i % 2 === 0) {
-                        acc.push(`[${arr[i].toFixed(4)}, ${arr[i + 1].toFixed(4)}]`);
+                        acc.push(`[${arr[i].toFixed(GIS_SETTINGS.COORDINATES.DECIMAL_POINTS)}, ${arr[i + 1].toFixed(GIS_SETTINGS.COORDINATES.DECIMAL_POINTS)}]`);
                     }
                     return acc;
                 }, [])

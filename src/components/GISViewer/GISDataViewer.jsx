@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { useAppContext } from '../../contexts/AppContext';
 import { TABS } from '../../constants/Tabs';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { GEOMETRY_TYPE_LABELS, GEOMETRY_TYPES, LAYER_TYPES } from "../../constants/Geometry";
+import { GEOMETRY_TYPE_LABELS, GEOMETRY_TYPES } from "../../constants/Geometry";
 import FeatureDetailsPopup from './FeatureDetails/FeatureDetailsPopup';
 import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
@@ -15,6 +15,7 @@ import { addLogs } from '../../utils/LogUtils';
 import { LOG_TYPES } from '../../constants/LogTypes';
 import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
 import TimeSeriesControl from './TimeSeriesAnimation/TimeSeriesControl';
+import { GIS_SETTINGS } from '../../constants/GISSettings';
 
 export default function GISDataViewer() {
     const { activeTab, fileUploads, fileDetails, setLogs } = useAppContext();
@@ -42,53 +43,41 @@ export default function GISDataViewer() {
         const map = mapRef.current;
         if (!map || !geojsonData) return;
 
-        const layerId = "point-markers-layer";
-        const sourceId = "point-markers-source";
-
-        // Remove existing source and layer if they exist
-        if (map.getLayer(layerId)) {
-            map.removeLayer(layerId);
-        }
-        if (map.getSource(sourceId)) {
-            map.removeSource(sourceId);
-        }
-
-        // Add GeoJSON source
-        map.addSource(sourceId, {
-            type: "geojson",
-            data: geojsonData
-        });
+        const type = GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT];
+        const layerId = `${type}-layer`;
 
         // Add circle layer for points
-        map.addLayer({
-            id: layerId,
-            type: "circle",
-            source: sourceId,
-            paint: {
-                "circle-radius": 6,
-                "circle-color": pointColor,
-                "circle-stroke-width": 1,
-                "circle-stroke-color": "#ffffff"
-            },
-            filter: ["==", ["geometry-type"], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]]
-        });
+        if (!map.getLayer(layerId)) {
+            map.addLayer({
+                id: layerId,
+                type: "circle",
+                source: GIS_SETTINGS.LAYER.SOURCE.ID,
+                paint: {
+                    "circle-radius": GIS_SETTINGS.GEOMETRY.POINT.CIRCLE.RADIUS,
+                    "circle-color": pointColor,
+                    "circle-stroke-width": GIS_SETTINGS.GEOMETRY.POINT.CIRCLE.STROKE_WIDTH,
+                    "circle-stroke-color": GIS_SETTINGS.GEOMETRY.POINT.CIRCLE.STROKE_COLOR
+                },
+                filter: ["==", ["geometry-type"], type]
+            });
 
-        // Add interactivity: hover effect
-        map.on("mouseenter", layerId, () => {
-            map.getCanvas().style.cursor = "pointer";
-        });
+            // Add interactivity: hover effect
+            map.on("mouseenter", layerId, () => {
+                map.getCanvas().style.cursor = "pointer";
+            });
 
-        map.on("mouseleave", layerId, () => {
-            map.getCanvas().style.cursor = "";
-        });
+            map.on("mouseleave", layerId, () => {
+                map.getCanvas().style.cursor = "";
+            });
 
-        // Click event to select feature
-        map.on("click", layerId, (e) => {
-            const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
-            if (features.length > 0) {
-                setSelectedFeature(features[0]);
-            }
-        });
+            // Click event to select feature
+            map.on("click", layerId, (e) => {
+                const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
+                if (features.length > 0) {
+                    setSelectedFeature(features[0]);
+                }
+            });
+        }
     };
 
     // Function to add line and polygon
@@ -101,11 +90,11 @@ export default function GISDataViewer() {
             if (!map.getLayer(layerId)) {
                 map.addLayer({
                     id: layerId,
-                    type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
-                    source: "gis-data",
+                    type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? "line" : "fill",
+                    source: GIS_SETTINGS.LAYER.SOURCE.ID,
                     paint: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]
-                        ? { "line-width": 3, "line-color": lineColor }
-                        : { "fill-color": polygonColor, "fill-opacity": 0.5 },
+                        ? { "line-width": GIS_SETTINGS.GEOMETRY.LINE.WIDTH, "line-color": lineColor }
+                        : { "fill-color": polygonColor, "fill-opacity": GIS_SETTINGS.GEOMETRY.POLYGON.OPACITY },
                     filter: ["==", ["geometry-type"], type]
                 });
 
@@ -173,12 +162,12 @@ export default function GISDataViewer() {
             if (!filteredData) return;
 
             // Update the source data for GIS data
-            if (map.getSource("gis-data")) {
-                map.getSource("gis-data").setData(filteredData);
+            if (map.getSource(GIS_SETTINGS.LAYER.SOURCE.ID)) {
+                map.getSource(GIS_SETTINGS.LAYER.SOURCE.ID).setData(filteredData);
             }
             else {
-                map.addSource("gis-data", {
-                    type: "geojson",
+                map.addSource(GIS_SETTINGS.LAYER.SOURCE.ID, {
+                    type: GIS_SETTINGS.LAYER.SOURCE.TYPE,
                     data: filteredData
                 });
             }
@@ -221,7 +210,7 @@ export default function GISDataViewer() {
             });
 
             if (!bounds.isEmpty()) {
-                map.fitBounds(bounds, { padding: 50, maxZoom: 7 });
+                map.fitBounds(bounds, { padding: GIS_SETTINGS.MAP_BOUNDS.PADDING, maxZoom: GIS_SETTINGS.MAP_BOUNDS.MAX_ZOOM });
             }
         }
         catch (error) {
@@ -235,15 +224,17 @@ export default function GISDataViewer() {
         const map = mapRef.current;
         if (!map) return;
 
-        if (map.getLayer(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] + "-layer")) {
-            map.setPaintProperty(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] + "-layer", "line-color", lineColor);
+        const lineStringLayerId = GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] + "-layer";
+        if (map.getLayer(lineStringLayerId)) {
+            map.setPaintProperty(lineStringLayerId, "line-color", lineColor);
         }
 
-        if (map.getLayer(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON] + "-layer")) {
-            map.setPaintProperty(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON] + "-layer", "fill-color", polygonColor);
+        const polygonLayerId = GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON] + "-layer";
+        if (map.getLayer(polygonLayerId)) {
+            map.setPaintProperty(polygonLayerId, "fill-color", polygonColor);
         }
 
-        const pointLayerId = "point-markers-layer";
+        const pointLayerId = GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT] + "-layer";
         if (map.getLayer(pointLayerId)) {
             map.setPaintProperty(pointLayerId, "circle-color", pointColor);
         }
@@ -261,8 +252,8 @@ export default function GISDataViewer() {
         mapRef.current = new mapboxgl.Map({
             container: mapContainerRef.current,
             style: MAP_STYLE_URLS[mapStyle],
-            center: [-106.3468, 56.1304],
-            zoom: 7,
+            center: [GIS_SETTINGS.COORDINATES.CENTER.LONG, GIS_SETTINGS.COORDINATES.CENTER.LAT],
+            zoom: GIS_SETTINGS.MAP_BOUNDS.MAX_ZOOM,
         });
 
         const map = mapRef.current;
