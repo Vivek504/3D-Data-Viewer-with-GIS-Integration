@@ -11,6 +11,7 @@ import { POINT_CLOUD_COLORS } from '../../constants/ThreeDViewerColors';
 import { addLogs } from '../../utils/LogUtils';
 import { LOG_TYPES } from '../../constants/LogTypes';
 import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
+import { THREE_D_SETTINGS } from '../../constants/ThreeDSettings';
 
 export default function ThreeDPointCloudViewer() {
     const { fileUploads, setLogs } = useAppContext();
@@ -52,10 +53,10 @@ export default function ThreeDPointCloudViewer() {
         sceneRef.current = scene;
 
         const camera = new THREE.PerspectiveCamera(
-            75,
+            THREE_D_SETTINGS.CAMERA_SETTINGS.FOV,
             containerRef.current.clientWidth / containerRef.current.clientHeight,
-            0.1,
-            1000
+            THREE_D_SETTINGS.CAMERA_SETTINGS.NEAR,
+            THREE_D_SETTINGS.CAMERA_SETTINGS.FAR
         );
         cameraRef.current = camera;
 
@@ -91,7 +92,7 @@ export default function ThreeDPointCloudViewer() {
             else if (file.name.endsWith(FILE_TYPES.XYZ)) {
                 const loader = new XYZLoader();
                 const geometry = loader.parse(event.target.result);
-                const material = new THREE.PointsMaterial({ size: 0.005, vertexColors: false, color: POINT_CLOUD_COLORS.DEFAULT });
+                const material = new THREE.PointsMaterial({ size: THREE_D_SETTINGS.POINT_SIZE.XYZ.DEFAULT, vertexColors: false, color: POINT_CLOUD_COLORS.DEFAULT });
                 loadedObject = new THREE.Points(geometry, material);
             }
 
