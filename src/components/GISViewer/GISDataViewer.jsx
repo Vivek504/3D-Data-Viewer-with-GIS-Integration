@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useAppContext } from '../../contexts/AppContext';
 import { TABS } from '../../constants/Tabs';
@@ -8,12 +8,13 @@ import FeatureDetailsPopup from './FeatureDetails/FeatureDetailsPopup';
 import { useGISViewerContext } from '../../contexts/GISViewerContext';
 import { MAP_STYLE_URLS } from '../../constants/MapStyles';
 import MapSearch from './MapSearch/MapSearch';
-import { filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText } from '../../utils/GeoJSONFilterUtils';
+import { filterGeoJSONByDate, filterGeoJSONByGeometryType, filterGeoJSONDataBySearchText, getMinMaxDate } from '../../utils/GeoJSONFilterUtils';
 import ErrorMessageDialog from '../shared/ErrorMessageDialog';
 import { FILE_MESSAGES, GIS_DATA_VIEWER_MESSAGES } from '../../constants/ErrorMessages';
 import { addLogs } from '../../utils/LogUtils';
 import { LOG_TYPES } from '../../constants/LogTypes';
 import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
+import TimeSeriesControl from './TimeSeriesAnimation/TimeSeriesControl';
 
 export default function GISDataViewer() {
     const { activeTab, fileUploads, fileDetails, setLogs } = useAppContext();
@@ -31,45 +32,102 @@ export default function GISDataViewer() {
     const [showErrorMessageDialog, setShowErrorMessageDialog] = useState(false);
     const [errorMessage, setErroMessage] = useState();
 
+    const [minDate, setMinDate] = useState();
+    const [maxDate, setMaxDate] = useState();
+    const [selectedDate, setSelectedDate] = useState();
+    const [isTimeBoxVisible, setIsTimeBoxVisible] = useState(false);
+
     // Function to add point markers on the map
     const addPointMarkers = (geojsonData) => {
         const map = mapRef.current;
-        if (!map) return;
+        if (!map || !geojsonData) return;
 
-        markersRef.current.forEach(marker => marker.remove());
-        markersRef.current = [];
+        const layerId = "point-markers-layer";
+        const sourceId = "point-markers-source";
 
-        geojsonData.features.forEach(feature => {
-            if (feature.geometry.type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]) {
-                // Create the marker on the map using default Mapbox marker
-                const marker = new mapboxgl.Marker({ color: pointColor })
-                    .setLngLat(feature.geometry.coordinates)
-                    .addTo(map);
+        // Remove existing source and layer if they exist
+        if (map.getLayer(layerId)) {
+            map.removeLayer(layerId);
+        }
+        if (map.getSource(sourceId)) {
+            map.removeSource(sourceId);
+        }
 
-                // Get the marker's HTML element
-                const markerElement = marker.getElement();
+        // Add GeoJSON source
+        map.addSource(sourceId, {
+            type: "geojson",
+            data: geojsonData
+        });
 
-                // Ensure marker is interactable
-                markerElement.style.cursor = "pointer";
+        // Add circle layer for points
+        map.addLayer({
+            id: layerId,
+            type: "circle",
+            source: sourceId,
+            paint: {
+                "circle-radius": 6,
+                "circle-color": pointColor,
+                "circle-stroke-width": 1,
+                "circle-stroke-color": "#ffffff"
+            },
+            filter: ["==", ["geometry-type"], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POINT]]
+        });
 
-                // Add hover effect: Change cursor on hover
-                markerElement.addEventListener("mouseenter", () => {
-                    map.getCanvas().style.cursor = "pointer";
-                });
+        // Add interactivity: hover effect
+        map.on("mouseenter", layerId, () => {
+            map.getCanvas().style.cursor = "pointer";
+        });
 
-                markerElement.addEventListener("mouseleave", () => {
-                    map.getCanvas().style.cursor = "";
-                });
+        map.on("mouseleave", layerId, () => {
+            map.getCanvas().style.cursor = "";
+        });
 
-                // Event listener for when the marker is clicked
-                markerElement.addEventListener("click", () => {
-                    setSelectedFeature(feature);
-                });
-
-                markersRef.current.push(marker);
+        // Click event to select feature
+        map.on("click", layerId, (e) => {
+            const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
+            if (features.length > 0) {
+                setSelectedFeature(features[0]);
             }
         });
     };
+
+    // Function to add line and polygon
+    const addLineAndPolygon = () => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        [GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]].forEach(type => {
+            const layerId = `${type}-layer`;
+            if (!map.getLayer(layerId)) {
+                map.addLayer({
+                    id: layerId,
+                    type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
+                    source: "gis-data",
+                    paint: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]
+                        ? { "line-width": 3, "line-color": lineColor }
+                        : { "fill-color": polygonColor, "fill-opacity": 0.5 },
+                    filter: ["==", ["geometry-type"], type]
+                });
+
+                // Add hover effect to change cursor
+                map.on("mouseenter", layerId, () => {
+                    map.getCanvas().style.cursor = "pointer";
+                });
+
+                map.on("mouseleave", layerId, () => {
+                    map.getCanvas().style.cursor = "";
+                });
+
+                // Event listener for layer clicks
+                map.on("click", layerId, (e) => {
+                    const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
+                    if (features.length > 0) {
+                        setSelectedFeature(features[0]);
+                    }
+                });
+            }
+        });
+    }
 
     // Function to get GeoJSON data from fileUploads
     const getGeoJsonData = () => {
@@ -95,6 +153,14 @@ export default function GISDataViewer() {
         const geojsonData = getGeoJsonData();
         if (geojsonData) {
             setFilteredData(filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes));
+        }
+    }
+
+    // Function to update filtered data by date
+    const updatedFilteredDataByDate = () => {
+        const geojsonData = getGeoJsonData();
+        if (geojsonData && selectedDate) {
+            setFilteredData(filterGeoJSONByDate(geojsonData, selectedDate));
         }
     }
 
@@ -127,37 +193,7 @@ export default function GISDataViewer() {
             addPointMarkers(filteredData);
 
             // Add line and polygon layers
-            [GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING], GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON]].forEach(type => {
-                const layerId = `${type}-layer`;
-                if (!map.getLayer(layerId)) {
-                    map.addLayer({
-                        id: layerId,
-                        type: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING] ? LAYER_TYPES.LINE : LAYER_TYPES.FILL,
-                        source: "gis-data",
-                        paint: type === GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.LINE_STRING]
-                            ? { "line-width": 3, "line-color": lineColor }
-                            : { "fill-color": polygonColor, "fill-opacity": 0.5 },
-                        filter: ["==", ["geometry-type"], type]
-                    });
-
-                    // Add hover effect to change cursor
-                    map.on("mouseenter", layerId, () => {
-                        map.getCanvas().style.cursor = "pointer";
-                    });
-
-                    map.on("mouseleave", layerId, () => {
-                        map.getCanvas().style.cursor = "";
-                    });
-
-                    // Event listener for layer clicks
-                    map.on("click", layerId, (e) => {
-                        const features = map.queryRenderedFeatures(e.point, { layers: [layerId] });
-                        if (features.length > 0) {
-                            setSelectedFeature(features[0]);
-                        }
-                    });
-                }
-            });
+            addLineAndPolygon();
 
             // Fit map bounds to the data
             const bounds = new mapboxgl.LngLatBounds();
@@ -207,11 +243,10 @@ export default function GISDataViewer() {
             map.setPaintProperty(GEOMETRY_TYPE_LABELS[GEOMETRY_TYPES.POLYGON] + "-layer", "fill-color", polygonColor);
         }
 
-        // Update the point marker colors
-        markersRef.current.forEach(marker => {
-            const el = marker.getElement();
-            el.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg width="25" height="35" viewBox="0 0 25 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 0C5.59644 0 0 5.59644 0 12.5C0 21.875 12.5 35 12.5 35C12.5 35 25 21.875 25 12.5C25 5.59644 19.4036 0 12.5 0ZM12.5 17C10.0147 17 8 14.9853 8 12.5C8 10.0147 10.0147 8 12.5 8C14.9853 8 17 10.0147 17 12.5C17 14.9853 14.9853 17 12.5 17Z" fill="${encodeURIComponent(pointColor)}"/></svg>')`;
-        });
+        const pointLayerId = "point-markers-layer";
+        if (map.getLayer(pointLayerId)) {
+            map.setPaintProperty(pointLayerId, "circle-color", pointColor);
+        }
     };
 
     // Initialize the Mapbox map and set up layers
@@ -237,6 +272,12 @@ export default function GISDataViewer() {
             const geojsonData = getGeoJsonData();
             if (geojsonData) {
                 setFilteredData(geojsonData);
+                const minMaxDate = getMinMaxDate(geojsonData);
+                if (minMaxDate && minMaxDate.minDate && minMaxDate.minDate) {
+                    setMinDate(minMaxDate.minDate);
+                    setMaxDate(minMaxDate.maxDate);
+                    setSelectedDate(minMaxDate.minDate);
+                }
                 addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.DISPLAYED_MAP, setLogs);
             }
         });
@@ -274,6 +315,14 @@ export default function GISDataViewer() {
         }
     }, [filteredGeometryTypes]);
 
+    // Update selected date if the time series animation is enabled
+    useEffect(() => {
+        if (isTimeBoxVisible && selectedDate && mapRef.current && mapRef.current.isStyleLoaded()) {
+            updatedFilteredDataByDate();
+            addLogs(LOG_TYPES.SYSTEM, SYSTEM_FEEDBACK.APPLIED_FILTER_BY_DATE, setLogs);
+        }
+    }, [isTimeBoxVisible, selectedDate]);
+
     // Update map layers when filtered data changes
     useEffect(() => {
         if (filteredData) {
@@ -290,6 +339,28 @@ export default function GISDataViewer() {
         }
     }, [pointColor, lineColor, polygonColor]);
 
+    // Function to handle time series icon click
+    const handleTimeSeriesIconClick = () => {
+        // Function to check if a date is valid
+        const isValidDate = (date) => {
+            return date && !isNaN(new Date(date).getTime());
+        };
+
+        // Check if both dates are valid
+        if (!isValidDate(minDate) || !isValidDate(maxDate)) {
+            setShowErrorMessageDialog(true);
+            setErroMessage(GIS_DATA_VIEWER_MESSAGES.TIMESTAMP_FORMAT_REQUIRED);
+            return;
+        }
+
+        if (isTimeBoxVisible) {
+            const geojsonData = getGeoJsonData();
+            setFilteredData(geojsonData);
+        }
+
+        setIsTimeBoxVisible(!isTimeBoxVisible);
+    };
+
     return (
         <div className="w-full h-full relative">
             <MapSearch
@@ -298,6 +369,19 @@ export default function GISDataViewer() {
             />
 
             <div ref={mapContainerRef} className="w-full h-full" />
+
+            {minDate && maxDate && selectedDate && (
+                // use Time Series Control here
+                <TimeSeriesControl
+                    minDate={minDate}
+                    maxDate={maxDate}
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
+                    isTimeBoxVisible={isTimeBoxVisible}
+                    handleIconClick={handleTimeSeriesIconClick}
+                    setLogs={setLogs}
+                />
+            )}
 
             {selectedFeature && (
                 <FeatureDetailsPopup
