@@ -17,7 +17,7 @@ export function filterGeoJSONDataBySearchText(geojsonData, searchText) {
             if (val && typeof val === DATA_TYPES.OBJECT) {
                 return searchInObject(val); // Recursively search in nested objects
             }
-            
+
             if (typeof val === DATA_TYPES.NUMBER && !isNaN(lowerSearch)) {
                 return Number(val) === Number(lowerSearch); // Match found in numeric value
             }
@@ -42,4 +42,32 @@ export function filterGeoJSONByGeometryType(geojsonData, filteredGeometryTypes) 
     });
 
     return { ...geojsonData, features: filteredFeatures }; // Return filtered GeoJSON data
+}
+
+export function getMinMaxDate(geojsonData) {
+    const dates = geojsonData.features.map(feature => new Date(feature.properties.timestamp)); // Extract timestamps and convert to Date objects
+
+    const minDate = new Date(Math.min(...dates)); // Get the earliest date
+    const maxDate = new Date(Math.max(...dates)); // Get the latest date
+
+    return { minDate, maxDate };
+}
+
+export function filterGeoJSONByDate(geojsonData, selectedDate) {
+    const targetTimestamp = new Date(selectedDate).getTime();
+
+    // Filter features based on the timestamp
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        if(!feature.properties.timestamp){
+            return false;
+        }
+        const featureTimestamp = new Date(feature.properties.timestamp).getTime();
+        return featureTimestamp === targetTimestamp;
+    });
+
+    // Return a new GeoJSON object with the filtered features
+    return {
+        ...geojsonData,
+        features: filteredFeatures
+    };
 }
