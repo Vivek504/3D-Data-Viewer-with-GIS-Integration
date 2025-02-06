@@ -3,7 +3,7 @@ import { Plus, X, Trash2 } from "lucide-react";
 import { POINT_CLOUD_COLORS } from "../../../constants/ThreeDViewerColors";
 import { getStepSizeForRange } from "../../../utils/MathUtils";
 
-export default function AltitudeColorPopup({ min, max, onClose, colorRanges, setColorRanges, onResetColorMapping }) {
+export default function AltitudeColorPopup({ min, max, onApply, onClose, colorRanges, setColorRanges, onResetColorMapping }) {
     const stepSize = getStepSizeForRange(min, max);
     const [segments, setSegments] = useState([]);
 
@@ -206,16 +206,16 @@ export default function AltitudeColorPopup({ min, max, onClose, colorRanges, set
                 {/* Footer buttons */}
                 <div className="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
                     <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        onClick={onResetColorMapping}
+                        className="px-4 py-2 text-sm border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition"
                     >
-                        Close
+                        Reset
                     </button>
                     <button
-                        onClick={onResetColorMapping}
-                        className="px-4 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                        onClick={onApply}
+                        className="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
                     >
-                        Reset Changes
+                        Apply
                     </button>
                 </div>
             </div>
