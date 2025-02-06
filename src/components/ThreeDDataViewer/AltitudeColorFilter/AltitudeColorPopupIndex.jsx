@@ -41,8 +41,13 @@ export default function AltitudeColorPopupIndex() {
         setIsPopupOpen(true);
     };
 
-    // Closes the popup and logs changes if any modifications were made
+    // Closes the popup
     const handleClosePopup = () => {
+        setIsPopupOpen(false);
+    };
+
+    // Apply the changes and logs changes if any modifications were made
+    const handleApplyPopup = () => {
         setApplyColorMapping(true);
         setIsPopupOpen(false);
 
@@ -75,6 +80,7 @@ export default function AltitudeColorPopupIndex() {
                     max={parseFloat(maxAltitude.toFixed(getDecimalPrecisionLength(maxAltitude)))}
                     colorRanges={colorRanges}
                     setColorRanges={setColorRanges}
+                    onApply={handleApplyPopup}
                     onClose={handleClosePopup}
                     onResetColorMapping={onResetColorMapping}
                 />
