@@ -18,7 +18,7 @@ This project is a web application that allows users to upload and visualize 3D p
 
 **Filters & Controls:**
 
-*   **3D Data:** Point size adjustment, color mapping by altitude with altitude range filtering, and background color filter.
+*   **3D Data:** Point size adjustment, color mapping by altitude with altitude range filtering, background color filter, and raycasting to display point positions on mouse click.
 *   **GIS Data:** Metadata display on marker click (coordinates, tags/descriptions), filtering by specific geometry type or property, customizable map style, and coloring for geometry types.
 
 **Time-Series Animation:**
