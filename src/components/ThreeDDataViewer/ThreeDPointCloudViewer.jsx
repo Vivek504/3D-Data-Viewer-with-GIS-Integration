@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import * as THREE from 'three';
 import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader';
@@ -12,6 +12,7 @@ import { addLogs } from '../../utils/LogUtils';
 import { LOG_TYPES } from '../../constants/LogTypes';
 import { SYSTEM_FEEDBACK, USER_ACTIONS } from '../../constants/LogsMessages';
 import { THREE_D_SETTINGS } from '../../constants/ThreeDSettings';
+import PointCoordinateDisplay from './PointCoordinateDisplay/PointCoordinateDisplay';
 
 export default function ThreeDPointCloudViewer() {
     const { fileUploads, setLogs } = useAppContext();
@@ -26,6 +27,10 @@ export default function ThreeDPointCloudViewer() {
         altitudeRanges,
         backgroundColor
     } = useThreeDDataViewerContext();
+
+    const [clickedPoint, setClickedPoint] = useState();
+    const [isPositionVisible, setIsPositionVisible] = useState(false);
+    const [clickedPosition, setClickedPosition] = useState();
 
     // References to store three.js objects and original data
     const loadedObjectRef = useRef(null);
@@ -69,6 +74,10 @@ export default function ThreeDPointCloudViewer() {
         // Set up orbit controls for camera interaction
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+
+        // Set up raycaster and pointer
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
 
         const reader = new FileReader();
 
@@ -157,6 +166,30 @@ export default function ThreeDPointCloudViewer() {
         };
         window.addEventListener('resize', handleResize);
 
+        // Handle mouse click on object
+        const handleOnObjectClick = (event) => {
+            const rect = renderer.domElement.getBoundingClientRect();
+            
+            pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+
+                setClickedPoint(point);
+                setClickedPosition({
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top
+                });
+                setIsPositionVisible(true);
+            }
+        }
+        containerRef?.current.addEventListener('click', handleOnObjectClick);
+
         // Adjust camera position and parameters to fit the object
         const fitCameraToObject = (camera, controls, object, renderer, offset = 1.25) => {
             const boundingBox = new THREE.Box3().setFromObject(object);
@@ -183,6 +216,7 @@ export default function ThreeDPointCloudViewer() {
         // Cleanup function on component unmount or file change
         return () => {
             window.removeEventListener('resize', handleResize);
+            containerRef?.current?.removeEventListener('click', handleOnObjectClick);
 
             if (renderer) {
                 renderer.dispose();
@@ -419,5 +453,17 @@ export default function ThreeDPointCloudViewer() {
         }
     }, [backgroundColor]);
 
-    return <div ref={containerRef} className="w-full h-full" />;
+    const handlePointDisplayClose = (event) => {
+        event.stopPropagation();
+        setClickedPoint();
+        setClickedPosition();
+        setIsPositionVisible(false);
+    }
+
+    return (
+        <div className="w-full h-full relative">
+            <div ref={containerRef} className="w-full h-full" />
+            {isPositionVisible && clickedPoint && clickedPosition && <PointCoordinateDisplay clickedPoint={clickedPoint} clickedPosition={clickedPosition} handleClose={handlePointDisplayClose} />}
+        </div>
+    );
 }
